@@ -3,8 +3,14 @@ import { InboxOutlined, CheckOutlined } from '@ant-design/icons';
 import { useViewer } from './viewer';
 import { S } from './strings';
 
-export const EXAMPLE_MODELS = ['/examples/school_arq.frag', '/examples/school_str.frag'];
-const EXAMPLE_BCF = '/examples/demo.bcfzip';
+// Local testing: VITE_EXAMPLE=crais in .env.local (gitignored) loads the reference viewer's example files from
+// test-fixtures/crais via the dev-only /local-fixtures route. They are not ours to ship, so never in builds.
+const CRAIS = import.meta.env.DEV && import.meta.env.VITE_EXAMPLE === 'crais';
+const CRAIS_BASE = '/local-fixtures/crais/';
+export const EXAMPLE_MODELS = CRAIS
+  ? ['example-arc', 'example-mep', 'example-str'].map((n) => `${CRAIS_BASE}${n}.frag`)
+  : ['/examples/school_arq.frag', '/examples/school_str.frag'];
+const EXAMPLE_BCF = CRAIS ? `${CRAIS_BASE}example-bcf.bcfzip` : '/examples/demo.bcfzip';
 
 export function WelcomeModal({ open, onClose }: { open: boolean; onClose(): void }) {
   const { models, bcf } = useViewer();
