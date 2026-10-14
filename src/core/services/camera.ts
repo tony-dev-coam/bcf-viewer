@@ -87,6 +87,11 @@ export function createCameraService(engine: Engine) {
       const pos = point.clone().addScaledVector(normal.clone().normalize(), Math.max(controls.distance, 5));
       await controls.setLookAt(pos.x, pos.y, pos.z, point.x, point.y, point.z, true);
     },
+    /** After something else (BCF viewpoint) switched the projection. */
+    syncProjection() {
+      store.update({ projection: camera.projection.current === 'Orthographic' ? 'orthographic' : 'perspective' });
+      if (store.getSnapshot().projection === 'orthographic' && store.getSnapshot().nav === 'fly') void setNav('orbit');
+    },
     async reset() {
       await setNav('orbit');
     },

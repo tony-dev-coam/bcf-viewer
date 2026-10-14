@@ -10,6 +10,7 @@ import { createViewFromPlaneTool } from './tools/viewFromPlaneTool';
 import { createMeasureService } from './services/measure';
 import { createClipService } from './services/clip';
 import { createColorService } from './services/color';
+import { createBcfService } from './bcf/service';
 import { parseItemData, ITEM_DATA_CONFIG, type ElementInfo } from './services/elementInfo';
 
 export async function createViewer(container: HTMLElement) {
@@ -23,6 +24,7 @@ export async function createViewer(container: HTMLElement) {
   const measure = createMeasureService(engine, tools);
   const clip = createClipService(engine, tools, selection);
   const color = createColorService(engine, tools, selection);
+  const bcf = createBcfService({ engine, tools, selection, visibility, color, camera });
   const trees = createTreeService(engine, visibility);
   const models = createModelService(engine, async () => {
     await trees.rebuild();
@@ -39,6 +41,7 @@ export async function createViewer(container: HTMLElement) {
     measure,
     clip,
     color,
+    bcf,
     tools,
     /** EI-01: structured IFC data for one element. */
     async elementInfo(modelId: string, localId: number): Promise<ElementInfo | null> {
@@ -66,3 +69,6 @@ export type { ToolId } from './tools/toolManager';
 export type { ElementInfo, Group, Row } from './services/elementInfo';
 export type { TreeNode } from './services/trees';
 export { collectItems } from './services/trees';
+export type { TopicRow, TopicFilters } from './bcf/helpers';
+export { filterTopics } from './bcf/helpers';
+export type { ActiveTopic, CommentRow, ViewpointRow, TopicDraft, TopicSession, BcfVersion, PinColorBy, BcfOptions } from './bcf/service';

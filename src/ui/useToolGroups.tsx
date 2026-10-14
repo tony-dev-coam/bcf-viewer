@@ -1,11 +1,11 @@
-import { BgColorsOutlined, FormatPainterOutlined, ClearOutlined, FileOutlined, ScissorOutlined, GatewayOutlined as BoxIcon, StopOutlined, ColumnHeightOutlined, LineOutlined, GatewayOutlined, BorderOutlined, AppstoreOutlined, DeleteOutlined, GlobalOutlined, SendOutlined, RocketOutlined, CodeSandboxOutlined, BlockOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined, BorderOuterOutlined, SelectOutlined, ExpandOutlined, AimOutlined, EyeOutlined, UndoOutlined, EyeInvisibleOutlined, BorderInnerOutlined } from '@ant-design/icons';
+import { EnvironmentOutlined, BgColorsOutlined, FormatPainterOutlined, ClearOutlined, FileOutlined, ScissorOutlined, GatewayOutlined as BoxIcon, StopOutlined, ColumnHeightOutlined, LineOutlined, GatewayOutlined, BorderOutlined, AppstoreOutlined, DeleteOutlined, GlobalOutlined, SendOutlined, RocketOutlined, CodeSandboxOutlined, BlockOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined, BorderOuterOutlined, SelectOutlined, ExpandOutlined, AimOutlined, EyeOutlined, UndoOutlined, EyeInvisibleOutlined, BorderInnerOutlined } from '@ant-design/icons';
 import { useStore, useViewer } from './viewer';
 import type { ToolGroupDef } from './layout/Toolbar';
 import type { ToolId } from '../core';
 import { S } from './strings';
 
 /** Toolbar sections: interaction tools | view tools | visibility/reset (LY-04). */
-export function useToolGroups(): ToolGroupDef[][] {
+export function useToolGroups(onNewTopicWithPin: () => void): ToolGroupDef[][] {
   const v = useViewer();
   const { active } = useStore(v.tools.store);
   const { count } = useStore(v.selection.store);
@@ -13,6 +13,7 @@ export function useToolGroups(): ToolGroupDef[][] {
   const meas = useStore(v.measure.store);
   const clip = useStore(v.clip.store);
   const col = useStore(v.color.store);
+  const bcfs = useStore(v.bcf.store);
   const mode = (id: ToolId, label: string, icon: React.ReactNode) => ({
     key: id, label, icon, active: active === id, kind: 'mode' as const, onClick: () => v.tools.activate(id),
   });
@@ -45,6 +46,13 @@ export function useToolGroups(): ToolGroupDef[][] {
           cmd('c-vis', clip.helpersVisible ? S.tools.clipPlanesHide : S.tools.clipPlanesShow, clip.helpersVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />, () => v.clip.setHelpersVisible(!clip.helpersVisible), !clip.planes),
           mode('clip-box', S.tools.clipBox, <BoxIcon />),
           mode('clip-plane', S.tools.clipPlane, <ScissorOutlined />),
+        ],
+      },
+      {
+        key: 'bcf', label: S.tools.groups.bcf, tone: 'interaction',
+        items: [
+          cmd('pins', bcfs.pinsVisible ? S.tools.bcfPinsHide : S.tools.bcfPinsShow, bcfs.pinsVisible ? <EyeInvisibleOutlined /> : <EyeOutlined />, () => v.bcf.setPinsVisible(!bcfs.pinsVisible)),
+          { key: 'bcf-pin', label: S.tools.bcfNewWithPin, icon: <EnvironmentOutlined />, active: active === 'bcf-pin', kind: 'mode' as const, onClick: () => onNewTopicWithPin() },
         ],
       },
     ],

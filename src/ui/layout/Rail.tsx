@@ -37,9 +37,9 @@ function RailButton({ label, active, onClick, children }: { label: string; activ
   );
 }
 
-export function Rail({ active, onSelect, busy }: { active: PanelId | null; onSelect(p: PanelId | null): void; busy?: boolean }) {
+export function Rail({ active, topicOpen, onSelect, busy }: { active: PanelId | null; topicOpen?: boolean; onSelect(p: PanelId | null): void; busy?: boolean }) {
   const btn = ([id, icon]: [PanelId, ReactNode]) => (
-    <RailButton key={id} label={S.panels[id]} active={active === id} onClick={() => onSelect(active === id ? null : id)}>
+    <RailButton key={id} label={S.panels[id]} active={id === 'topic' ? topicOpen : active === id} onClick={() => onSelect(id === 'topic' ? 'topic' : active === id ? null : id)}>
       {icon}
     </RailButton>
   );

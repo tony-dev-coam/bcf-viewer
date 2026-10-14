@@ -48,6 +48,8 @@ export function createVisibilityService(engine: Engine) {
       if (!isEmptyMap(keep)) await hider.set(false, keep);
       changed(false);
     },
+    /** Call after visibility was changed outside this service (e.g. a BCF viewpoint applied it). */
+    notifyChanged: (isolated = false) => changed(isolated),
     setAlwaysHidden(getter: () => Promise<ModelIdMap>) {
       alwaysHidden = getter;
     },
