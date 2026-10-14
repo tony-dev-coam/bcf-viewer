@@ -29,7 +29,7 @@ async function roundTrip(version: '2.1' | '3') {
   const bytes = new Uint8Array(await (await bcf.export()).arrayBuffer());
   const b = new OBC.Components();
   b.get(OBC.BCFTopics).setup({ version, strict: false });
-  await b.get(OBC.BCFTopics).load(normalizeBcfForImport(bytes));
+  await b.get(OBC.BCFTopics).load(normalizeBcfForImport(bytes).bytes);
   const t = [...b.get(OBC.BCFTopics).list.values()][0];
   const v = b.get(OBC.Viewpoints).list.get([...t.viewpoints][0])!;
   return { t, v };

@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import * as OBC from '@thatopen/components';
-import { unzipSync, zipSync, strToU8, strFromU8 } from 'fflate';
 import { createStore } from '../store';
 import type { Engine } from '../engine';
 import type { SelectionService } from '../services/selection';
@@ -9,7 +8,9 @@ import type { ColorService } from '../services/color';
 import type { CameraService } from '../services/camera';
 import type { Tool, ToolManager } from '../tools/toolManager';
 import type { IdMap } from '../services/selectionRules';
-import { patchBcfExceptions, patchBcfClippingPlanes } from '../patches/bcf';
+import { patchBcfExceptions, patchBcfClippingPlanes, setViewpointExtrasProvider } from '../patches/bcf';
+import { bcfToThree, threeToBcf, type V3 } from './viewpointXml';
+import type { ClipService } from '../services/clip';
 import { normalizeBcfForImport } from './coloring';
 import { visibilityForViewpoint, type TopicRow, type TopicFilters } from './helpers';
 
@@ -28,7 +29,6 @@ export interface TopicDraft {
 export interface TopicSession { guid: string | null; draft: TopicDraft; addedComments: string[]; dirty: boolean }
 export interface BcfOptions { types: string[]; statuses: string[]; priorities: string[]; stages: string[]; labels: string[]; users: string[] }
 
-const PINS_FILE = 'pins.json'; // D4: our sidecar inside the .bcfzip; other BCF tools ignore it
 const AUTHOR_KEY = 'bcf.author';
 
 const DEFAULTS: BcfOptions = {
@@ -51,8 +51,9 @@ const readAuthor = () => {
 /** BM-01…08, BT-01…08 on That Open BCFTopics + Viewpoints. */
 export function createBcfService(deps: {
   engine: Engine; tools: ToolManager; selection: SelectionService; visibility: VisibilityService; color: ColorService; camera: CameraService;
+  clip: ClipService;
 }) {
-  const { engine, tools, selection, visibility, color, camera } = deps;
+  const { engine, tools, selection, visibility, color, camera, clip } = deps;
   const { components, world, fragments } = engine;
   const bcf = components.get(OBC.BCFTopics);
   const viewpoints = components.get(OBC.Viewpoints);
@@ -70,6 +71,25 @@ export function createBcfService(deps: {
   });
 
   const pins = new Map<string, [number, number, number]>(); // viewpoint guid → world position
+  // Clipping planes per viewpoint (world space). Owned here, not via That Open plane ids, so they survive
+  // "delete all planes" and round-trip through BCF (That Open neither creates nor writes them).
+  const vpPlanes = new Map<string, { normal: THREE.Vector3; origin: THREE.Vector3 }[]>();
+  const forget = (vpGuid: string) => { viewpoints.list.delete(vpGuid); pins.delete(vpGuid); vpPlanes.delete(vpGuid); };
+
+  // BCF ⇄ world: axis swap + the fragments base coordinate system (same as That Open does for cameras).
+  // BCF Direction points to the clipped side; a three.js plane keeps the side its normal points to.
+  const base = () => fragments.baseCoordinationMatrix;
+  const toWorld = (p: V3) => new THREE.Vector3(...bcfToThree(p)).applyMatrix4(base());
+  const toBcf = (p: THREE.Vector3) => threeToBcf(p.clone().applyMatrix4(base().clone().invert()).toArray() as V3);
+  const dirToWorld = (d: V3) => new THREE.Vector3(...bcfToThree(d)).negate().transformDirection(base());
+  const dirToBcf = (n: THREE.Vector3) => threeToBcf(n.clone().negate().transformDirection(base().clone().invert()).toArray() as V3);
+  setViewpointExtrasProvider((vpGuid) => {
+    const pin = pins.get(vpGuid);
+    return {
+      planes: (vpPlanes.get(vpGuid) ?? []).map((pl) => ({ location: toBcf(pl.origin), direction: dirToBcf(pl.normal) })),
+      pin: pin && toBcf(new THREE.Vector3(...pin)),
+    };
+  });
   /** Topic created for a "new" session, created lazily so comments/viewpoints can attach before save. */
   let pendingNew: OBC.Topic | null = null;
   const snapshotUrls = new Map<string, { bytes: Uint8Array; url: string }>();
@@ -144,12 +164,23 @@ export function createBcfService(deps: {
     return fragments.modelIdMapToGuids(map);
   }
 
+  /** Camera + snapshot of the model, without the clipping gizmos in the picture. */
+  async function updateCamera(vp: OBC.Viewpoint) {
+    vp.world = world;
+    const helpers = clip.store.getSnapshot().helpersVisible;
+    clip.setHelpersVisible(false);
+    try {
+      await vp.updateCamera(true);
+    } finally {
+      clip.setHelpersVisible(helpers);
+    }
+  }
+
   /** BT-03: current camera + snapshot + selection + visibility + custom colors + clipping planes. */
   async function capture(): Promise<OBC.Viewpoint> {
     const vp = viewpoints.create();
-    vp.world = world;
-    await vp.updateCamera(true);
-    vp.updateClippingPlanes();
+    await updateCamera(vp);
+    vpPlanes.set(vp.guid, clip.planes());
     const sel = await fragments.modelIdMapToGuids(selection.store.getSnapshot().items);
     sel.forEach((g) => vp.selectionComponents.add(g));
     const visibleMap = await visibility.visibleMap();
@@ -170,7 +201,26 @@ export function createBcfService(deps: {
     const vp = viewpoints.list.get(vpGuid);
     if (!vp) return;
     vp.world = world;
-    await vp.go({ transition: true });
+    // Not vp.go(): it calls projection.set() un-awaited (even when unchanged), which re-inits the camera
+    // mid-transition and leaves it aimed at the model centre instead of the viewpoint.
+    const projection = vp.projection === 'Orthographic' ? 'orthographic' : 'perspective';
+    if (camera.store.getSnapshot().projection !== projection) await camera.setProjection(projection);
+    const p = vp.position;
+    const t = p.clone().addScaledVector(vp.direction, 80);
+    clip.deleteAll();
+    const planes = vpPlanes.get(vpGuid) ?? [];
+    for (const pl of planes) clip.addPlane(pl.normal, pl.origin);
+    if (planes.length) {
+      clip.setEnabled(true);
+      clip.setHelpersVisible(false); // show the section, not the plane gizmos (as in the viewpoint's snapshot)
+    }
+    const fov = (vp.camera as { field_of_view?: number }).field_of_view;
+    const three = world.camera.three;
+    if (fov && three instanceof THREE.PerspectiveCamera) {
+      three.fov = fov;
+      three.updateProjectionMatrix();
+    }
+    await Promise.all([vp.applyVisibility(), world.camera.controls.setLookAt(p.x, p.y, p.z, t.x, t.y, t.z, true)]);
     camera.syncProjection();
     visibility.notifyChanged(!vp.defaultVisibility);
     await selection.set(await vp.getSelectionMap());
@@ -182,28 +232,29 @@ export function createBcfService(deps: {
   }
 
   // ---- import / export ---------------------------------------------------------------------------------------
+  /**
+   * BCFTopics (un)zips with JSZip in async chunks; each chunk otherwise waits behind a 3D frame.
+   * Pausing rendering makes import/export time independent of model size / GPU speed.
+   */
+  async function withoutRendering<T>(fn: () => Promise<T>): Promise<T> {
+    const renderer = world.renderer!;
+    const wasEnabled = renderer.enabled;
+    renderer.enabled = false;
+    try {
+      return await fn();
+    } finally {
+      renderer.enabled = wasEnabled;
+    }
+  }
+
   async function importFile(file: File) {
     try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      // BCFTopics unzips snapshots with JSZip in async chunks; each chunk otherwise waits behind a 3D frame.
-      // Pausing rendering makes import time independent of model size / GPU speed.
-      const renderer = world.renderer!;
-      const wasEnabled = renderer.enabled;
-      renderer.enabled = false;
-      let topics: OBC.Topic[];
-      try {
-        ({ topics } = await bcf.load(normalizeBcfForImport(bytes)));
-      } finally {
-        renderer.enabled = wasEnabled;
+      const { bytes, extras } = normalizeBcfForImport(new Uint8Array(await file.arrayBuffer()));
+      const { topics } = await withoutRendering(() => bcf.load(bytes));
+      for (const x of extras) {
+        if (x.planes.length) vpPlanes.set(x.guid, x.planes.map((pl) => ({ origin: toWorld(pl.location), normal: dirToWorld(pl.direction) })));
+        if (x.pin) pins.set(x.guid, toWorld(x.pin).toArray() as [number, number, number]);
       }
-      try {
-        const entry = unzipSync(bytes, { filter: (f) => f.name === PINS_FILE })[PINS_FILE];
-        if (entry) for (const [g, p] of Object.entries(JSON.parse(strFromU8(entry)) as Record<string, [number, number, number]>)) pins.set(g, p);
-      } catch {
-        /* no or unreadable sidecar: pins are optional */
-      }
-      // Imported clipping planes are created live; keep them off until their viewpoint is opened.
-      for (const [, plane] of components.get(OBC.Clipper).list) plane.enabled = false;
       store.update({ error: null });
       refresh();
       return topics.length;
@@ -216,11 +267,7 @@ export function createBcfService(deps: {
   async function exportFile(guids: string[] | null, version: BcfVersion, fileName = 'topics') {
     bcf.config.version = version;
     const topics = (guids ? guids.map((g) => bcf.list.get(g)) : [...bcf.list.values()]).filter((t): t is OBC.Topic => !!t);
-    const zip = unzipSync(new Uint8Array(await (await bcf.export(topics)).arrayBuffer()));
-    const vpGuids = new Set(topics.flatMap((t) => topicViewpoints(t).map((v) => v.guid)));
-    const ownPins = Object.fromEntries([...pins].filter(([g]) => vpGuids.has(g)));
-    if (Object.keys(ownPins).length) zip[PINS_FILE] = strToU8(JSON.stringify(ownPins));
-    const blob = new Blob([zipSync(zip) as BlobPart], { type: 'application/octet-stream' });
+    const blob = await withoutRendering(() => bcf.export(topics)); // pins + clipping planes are written into each viewpoint (patches/bcf.ts)
     const url = URL.createObjectURL(blob);
     Object.assign(document.createElement('a'), { href: url, download: `${fileName}.bcfzip` }).click();
     URL.revokeObjectURL(url);
@@ -313,10 +360,7 @@ export function createBcfService(deps: {
       for (const g of list) {
         const t = bcf.list.get(g);
         if (!t) continue;
-        for (const v of topicViewpoints(t)) {
-          viewpoints.list.delete(v.guid);
-          pins.delete(v.guid);
-        }
+        for (const v of topicViewpoints(t)) forget(v.guid);
         bcf.list.delete(g);
       }
       if (store.getSnapshot().active && list.includes(store.getSnapshot().active!.guid)) store.update({ active: null, session: null });
@@ -373,12 +417,12 @@ export function createBcfService(deps: {
       if (t) {
         for (const c of s.addedComments) {
           const vp = t.comments.get(c)?.viewpoint;
-          if (vp) { viewpoints.list.delete(vp); pins.delete(vp); }
+          if (vp) forget(vp);
           t.comments.delete(c);
         }
       }
       if (pendingNew) {
-        for (const v of topicViewpoints(pendingNew)) { viewpoints.list.delete(v.guid); pins.delete(v.guid); }
+        for (const v of topicViewpoints(pendingNew)) forget(v.guid);
         bcf.list.delete(pendingNew.guid);
         pendingNew = null;
       }
@@ -406,7 +450,7 @@ export function createBcfService(deps: {
     removeComment(guid: string) {
       const t = sessionTopic();
       const vp = t.comments.get(guid)?.viewpoint;
-      if (vp) { viewpoints.list.delete(vp); t.viewpoints.delete(vp); pins.delete(vp); }
+      if (vp) { forget(vp); t.viewpoints.delete(vp); }
       t.comments.delete(guid);
       const s = store.getSnapshot().session!;
       store.update({ session: { ...s, addedComments: s.addedComments.filter((g) => g !== guid), dirty: true } });
@@ -425,8 +469,8 @@ export function createBcfService(deps: {
     async refreshViewpoint(vpGuid: string) {
       const vp = viewpoints.list.get(vpGuid);
       if (!vp) return;
-      vp.world = world;
-      await vp.updateCamera(true);
+      await updateCamera(vp);
+      vpPlanes.set(vp.guid, clip.planes());
       refresh();
     },
     /** BT-05: replace snapshot bytes (PNG/JPG file or sketch result). */

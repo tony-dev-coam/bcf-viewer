@@ -87,7 +87,8 @@ export function createClipService(engine: Engine, tools: ToolManager, selection:
       sync();
     },
     /** For BCF viewpoints. */
-    planes: () => [...clipper.list.values()].map((p) => ({ normal: p.normal.clone(), origin: p.origin.clone() })),
+    /** Enabled planes in world space (for BCF viewpoints). */
+    planes: () => (store.getSnapshot().enabled ? [...clipper.list.values()].filter((p) => p.enabled) : []).map((p) => ({ normal: p.normal.clone(), origin: p.origin.clone() })),
     addPlane(normal: THREE.Vector3, origin: THREE.Vector3) {
       if (room(1)) clipper.createFromNormalAndCoplanarPoint(engine.world, normal, origin);
     },

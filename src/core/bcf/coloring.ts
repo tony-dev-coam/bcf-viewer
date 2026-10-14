@@ -12,19 +12,25 @@ export function fixColoringForExport(xml: string, version: string): string {
 }
 
 import { unzipSync, zipSync, strFromU8, strToU8 } from 'fflate';
+import { parseViewpointExtras, type ViewpointExtras } from './viewpointXml';
 
-/** Rewrites viewpoint files (.bcfv) in a BCF zip so That Open's importer reads 3.0 colors. */
-export function normalizeBcfForImport(bytes: Uint8Array): Uint8Array {
+/**
+ * Rewrites viewpoint files (.bcfv) in a BCF zip so That Open's importer reads 3.0 colors, and collects the
+ * viewpoint parts it ignores (clipping planes, pins).
+ */
+export function normalizeBcfForImport(bytes: Uint8Array): { bytes: Uint8Array; extras: ViewpointExtras[] } {
   const files = unzipSync(bytes);
+  const extras: ViewpointExtras[] = [];
   let changed = false;
   for (const [name, data] of Object.entries(files)) {
     if (!name.endsWith('.bcfv')) continue;
     const xml = strFromU8(data);
+    extras.push(parseViewpointExtras(xml));
     const fixed = unwrapColorComponents(xml);
     if (fixed !== xml) {
       files[name] = strToU8(fixed);
       changed = true;
     }
   }
-  return changed ? zipSync(files) : bytes;
+  return { bytes: changed ? zipSync(files) : bytes, extras };
 }

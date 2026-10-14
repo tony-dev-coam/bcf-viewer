@@ -1,5 +1,6 @@
 import * as OBC from '@thatopen/components';
 import { fixColoringForExport } from '../bcf/coloring';
+import { extrasXml, type PlaneXml, type V3 } from '../bcf/viewpointXml';
 
 /**
  * Upstream bug (components 3.4.x): Viewpoint.createComponentTags() with includeSelectionTag=false writes
@@ -21,24 +22,25 @@ export function patchBcfExceptions() {
   };
 }
 
+type Extras = { planes: PlaneXml[]; pin?: V3 };
+let extrasFor: (vpGuid: string) => Extras = () => ({ planes: [] });
+/** The BCF service provides clipping planes + pin per viewpoint (BCF space) for export. */
+export function setViewpointExtrasProvider(fn: (vpGuid: string) => Extras) {
+  extrasFor = fn;
+}
+
 /**
- * Upstream gap (components 3.4.x): Viewpoint.serialize() never writes <ClippingPlanes>, although import reads
- * them. Insert them after the camera element. Also fixes <Coloring> to the target schema (see bcf/coloring.ts) (BCF schema order: Components, Camera, Lines, ClippingPlanes, Bitmaps).
+ * Upstream gaps (components 3.4.x): Viewpoint.serialize() never writes <ClippingPlanes> or <Lines>, and writes
+ * <Coloring> in the 2.1 shape for 3.0. Append our clipping planes + pin (zero-length line, as the reference viewer
+ * does) after the camera element and fix <Coloring> for the target schema (see bcf/coloring.ts).
  */
 export function patchBcfClippingPlanes() {
-  type Vec = { x: number; y: number; z: number };
-  const proto = OBC.Viewpoint.prototype as unknown as {
-    serialize(version?: string): Promise<string>;
-    toJSON(): { clipping_planes?: { location: Vec; direction: Vec }[] };
-  };
+  const proto = OBC.Viewpoint.prototype as unknown as { serialize(version?: string): Promise<string>; guid: string };
   const original = proto.serialize;
   proto.serialize = async function (this: typeof proto, version) {
     const target = version ?? (this as unknown as { _components: OBC.Components })._components.get(OBC.BCFTopics).config.version;
     const xml = fixColoringForExport(await original.call(this, version), target);
-    const planes = this.toJSON().clipping_planes ?? [];
-    if (!planes.length) return xml;
-    const v = (tag: string, p: Vec) => `<${tag}><X>${p.x}</X><Y>${p.y}</Y><Z>${p.z}</Z></${tag}>`;
-    const tags = planes.map((p) => `<ClippingPlane>${v('Location', p.location)}${v('Direction', p.direction)}</ClippingPlane>`).join('');
-    return xml.replace(/<\/VisualizationInfo>\s*$/, `<ClippingPlanes>${tags}</ClippingPlanes></VisualizationInfo>`);
+    const extra = extrasXml(extrasFor(this.guid));
+    return extra ? xml.replace(/<\/VisualizationInfo>\s*$/, `${extra}</VisualizationInfo>`) : xml;
   };
 }

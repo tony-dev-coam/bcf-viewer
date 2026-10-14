@@ -27,12 +27,14 @@ export async function createViewer(container: HTMLElement) {
   const measure = createMeasureService(engine, tools);
   const clip = createClipService(engine, tools, selection);
   const color = createColorService(engine, tools, selection);
-  const bcf = createBcfService({ engine, tools, selection, visibility, color, camera });
+  const bcf = createBcfService({ engine, tools, selection, visibility, color, camera, clip });
   const settings = createSettingsService(engine);
   const trees = createTreeService(engine, visibility);
+  // Fit first: the tree rebuild takes seconds on large models, and a fit after it would override
+  // any camera move made meanwhile (e.g. opening a BCF topic right after loading).
   const models = createModelService(engine, async () => {
+    void visibility.fitAll();
     await trees.rebuild();
-    await visibility.fitAll();
   });
 
   return {

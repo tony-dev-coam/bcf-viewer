@@ -39,7 +39,7 @@ async function load(bytes: Uint8Array, version?: '2.1' | '3') {
   const components = new OBC.Components();
   const bcf = components.get(OBC.BCFTopics);
   bcf.setup({ version: version ?? '3', strict: false, updateExtensionsOnImport: true, ignoreIncompleteTopicsOnImport: false });
-  await bcf.load(normalizeBcfForImport(bytes));
+  await bcf.load(normalizeBcfForImport(bytes).bytes);
   return components;
 }
 

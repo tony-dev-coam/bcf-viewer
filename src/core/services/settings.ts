@@ -12,7 +12,9 @@ export interface Settings {
 }
 
 const KEY = 'viewer.settings';
-const DEFAULTS: Settings = { theme: 'light', outlines: true, depthShadows: false, antialiasing: false, fixMissingFaces: false };
+// Theme follows the OS until the user picks one (like the reference viewer).
+const systemTheme = (): Settings['theme'] => (typeof matchMedia !== 'undefined' && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+const DEFAULTS: Settings = { theme: systemTheme(), outlines: true, depthShadows: false, antialiasing: false, fixMissingFaces: false };
 
 function load(): Settings {
   try {

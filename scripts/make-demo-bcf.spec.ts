@@ -15,11 +15,8 @@ const TOPICS: [string, string, string, string, string[], string, string, string,
 test('generate demo.bcfzip', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('bcf.author', 'demo@example.com'));
   await page.goto('/');
-  await page.getByRole('button', { name: 'Start with a BIM example model' }).click();
-  await page.waitForFunction(() => {
-    const v = (window as any).__viewer;
-    return v && v.models.store.getSnapshot().length === 2 && v.models.store.getSnapshot().every((m: any) => m.status === 'ready');
-  }, null, { timeout: 120_000 });
+  await page.getByRole('button', { name: 'Close', exact: true }).click(); // not the example button: it imports the old demo BCF
+  await page.evaluate(() => (window as any).__viewer.models.loadUrls(['/examples/school_arq.frag', '/examples/school_str.frag']));
   const box = (await page.getByTestId('viewport').boundingBox())!;
   await page.waitForTimeout(2500); // let the load-time "fit all" camera animation finish
 

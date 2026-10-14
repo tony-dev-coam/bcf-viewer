@@ -9,3 +9,4 @@ dist/
 public/vendor/
 test-results/
 playwright-report/
+test-fixtures/
