@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Empty, Input, Spin, Tooltip, Tree } from 'antd';
+import { Button, ColorPicker, Empty, Input, Spin, Tooltip, Tree } from 'antd';
 import {
   SearchOutlined, PlusSquareOutlined, MinusSquareOutlined, AimOutlined, EyeOutlined, EyeInvisibleOutlined,
   BorderOutlined, HomeOutlined, ColumnWidthOutlined,
@@ -42,6 +42,7 @@ export function TreesPanel() {
   const trees = useStore(viewer.trees.store);
   const { items: selected, count } = useStore(viewer.selection.store);
   const { version } = useStore(viewer.visibility.store);
+  const { custom } = useStore(viewer.color.store);
   const [tab, setTab] = useState<TabKey>('relations');
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<React.Key[]>([]);
@@ -89,6 +90,21 @@ export function TreesPanel() {
   const isHidden = (n: TreeNode) => {
     for (const [m, ids] of Object.entries(collectItems(n))) for (const id of ids) if (visible.has(itemKey(m, id))) return false;
     return true;
+  };
+
+  /** MT-05: null = original color, a hex = one custom color, 'mixed' = several. */
+  const nodeColor = (n: TreeNode): string | null | 'mixed' => {
+    const hexes = Object.keys(custom);
+    if (!hexes.length) return null;
+    let found: string | null | undefined;
+    for (const [m, ids] of Object.entries(collectItems(n))) {
+      for (const id of ids) {
+        const c = hexes.find((h) => custom[h][m]?.has(id)) ?? null;
+        if (found === undefined) found = c;
+        else if (found !== c) return 'mixed';
+      }
+    }
+    return found ?? null;
   };
 
   const visibleOrder = () => {
@@ -175,6 +191,14 @@ export function TreesPanel() {
                   <span className={`min-w-0 flex-1 truncate ${node.isGroup || node.key.split(':').length < 3 ? 'font-semibold' : ''}`} title={node.ifcClass ? `${node.title} (${node.ifcClass})` : node.title}>
                     {node.title}
                   </span>
+                  <Swatch
+                    color={nodeColor(node)}
+                    label={node.title}
+                    onPick={(hex) => {
+                      const items = selectedKeys.includes(node.key) ? selected : collectItems(node);
+                      return hex ? viewer.color.paint(items, hex) : viewer.color.erase(items);
+                    }}
+                  />
                   <button
                     aria-label={`${S.trees.toggleVisibility} ${node.title}`}
                     className="cursor-pointer border-0 bg-transparent p-0.5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
@@ -189,5 +213,28 @@ export function TreesPanel() {
         )}
       </div>
     </div>
+  );
+}
+
+function Swatch({ color, label, onPick }: { color: string | null | 'mixed'; label: string; onPick(hex: string | null): void }) {
+  const style =
+    color === 'mixed'
+      ? { background: 'conic-gradient(#e74c3c, #f1c40f, #2ecc71, #3498db, #9b59b6, #e74c3c)' }
+      : color
+        ? { background: color, boxShadow: `0 0 0 2px white, 0 0 0 3px ${color}` }
+        : { background: 'linear-gradient(135deg, #c9c9c9, #8f8f8f)' };
+  return (
+    <span onClick={(e) => e.stopPropagation()}>
+      <ColorPicker
+        size="small"
+        disabledAlpha
+        allowClear
+        value={color && color !== 'mixed' ? color : undefined}
+        onChangeComplete={(c) => onPick(c.toHexString())}
+        onClear={() => onPick(null)}
+      >
+        <button aria-label={`${S.trees.color} ${label}`} className="size-3 cursor-pointer rounded-full border-0 p-0" style={style} />
+      </ColorPicker>
+    </span>
   );
 }

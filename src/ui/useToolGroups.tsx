@@ -1,4 +1,4 @@
-import { ScissorOutlined, GatewayOutlined as BoxIcon, StopOutlined, ColumnHeightOutlined, LineOutlined, GatewayOutlined, BorderOutlined, AppstoreOutlined, DeleteOutlined, GlobalOutlined, SendOutlined, RocketOutlined, CodeSandboxOutlined, BlockOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined, BorderOuterOutlined, SelectOutlined, ExpandOutlined, AimOutlined, EyeOutlined, UndoOutlined, EyeInvisibleOutlined, BorderInnerOutlined } from '@ant-design/icons';
+import { BgColorsOutlined, FormatPainterOutlined, ClearOutlined, FileOutlined, ScissorOutlined, GatewayOutlined as BoxIcon, StopOutlined, ColumnHeightOutlined, LineOutlined, GatewayOutlined, BorderOutlined, AppstoreOutlined, DeleteOutlined, GlobalOutlined, SendOutlined, RocketOutlined, CodeSandboxOutlined, BlockOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined, BorderOuterOutlined, SelectOutlined, ExpandOutlined, AimOutlined, EyeOutlined, UndoOutlined, EyeInvisibleOutlined, BorderInnerOutlined } from '@ant-design/icons';
 import { useStore, useViewer } from './viewer';
 import type { ToolGroupDef } from './layout/Toolbar';
 import type { ToolId } from '../core';
@@ -12,6 +12,7 @@ export function useToolGroups(): ToolGroupDef[][] {
   const cam = useStore(v.camera.store);
   const meas = useStore(v.measure.store);
   const clip = useStore(v.clip.store);
+  const col = useStore(v.color.store);
   const mode = (id: ToolId, label: string, icon: React.ReactNode) => ({
     key: id, label, icon, active: active === id, kind: 'mode' as const, onClick: () => v.tools.activate(id),
   });
@@ -64,6 +65,15 @@ export function useToolGroups(): ToolGroupDef[][] {
           mode('view-from-plane', S.tools.viewFromPlane, <BorderOuterOutlined />),
           { key: 'ortho', label: S.tools.orthographic, icon: <BlockOutlined />, active: cam.projection === 'orthographic', onClick: () => v.camera.setProjection('orthographic') },
           { key: 'persp', label: S.tools.perspective, icon: <CodeSandboxOutlined />, active: cam.projection === 'perspective', onClick: () => v.camera.setProjection('perspective') },
+        ],
+      },
+      {
+        key: 'color', label: S.tools.groups.color, tone: 'view',
+        items: [
+          cmd('col-clear', S.tools.colorClear, <ClearOutlined />, () => v.color.clearCustom(), !Object.keys(col.custom).length),
+          mode('color-paint', S.tools.colorItem, <FormatPainterOutlined />),
+          { key: 'white', label: S.tools.colorWhite, icon: <FileOutlined />, active: col.mode === 'white' && active !== 'color-paint', onClick: () => v.color.setMode('white') },
+          { key: 'orig', label: S.tools.colorOriginal, icon: <BgColorsOutlined />, active: col.mode === 'original' && active !== 'color-paint', onClick: () => v.color.setMode('original') },
         ],
       },
     ],

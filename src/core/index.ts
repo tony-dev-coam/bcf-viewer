@@ -9,6 +9,7 @@ import { createCameraService } from './services/camera';
 import { createViewFromPlaneTool } from './tools/viewFromPlaneTool';
 import { createMeasureService } from './services/measure';
 import { createClipService } from './services/clip';
+import { createColorService } from './services/color';
 import { parseItemData, ITEM_DATA_CONFIG, type ElementInfo } from './services/elementInfo';
 
 export async function createViewer(container: HTMLElement) {
@@ -21,6 +22,7 @@ export async function createViewer(container: HTMLElement) {
   tools.register('view-from-plane', createViewFromPlaneTool(tools, camera));
   const measure = createMeasureService(engine, tools);
   const clip = createClipService(engine, tools, selection);
+  const color = createColorService(engine, tools, selection);
   const trees = createTreeService(engine, visibility);
   const models = createModelService(engine, async () => {
     await trees.rebuild();
@@ -36,6 +38,7 @@ export async function createViewer(container: HTMLElement) {
     camera,
     measure,
     clip,
+    color,
     tools,
     /** EI-01: structured IFC data for one element. */
     async elementInfo(modelId: string, localId: number): Promise<ElementInfo | null> {

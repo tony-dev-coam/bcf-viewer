@@ -12,6 +12,7 @@ import { TreesPanel } from './panels/TreesPanel';
 import { WelcomeModal } from './WelcomeModal';
 import { Toolbar } from './layout/Toolbar';
 import { useToolGroups } from './useToolGroups';
+import { ColorPaintBar } from './ColorPaintBar';
 import { S } from './strings';
 
 function BottomToolbar() {
@@ -71,7 +72,10 @@ export default function App() {
                 </div>
               )}
             </div>
-            <div className="pointer-events-auto absolute bottom-3 left-1/2 -translate-x-1/2"><BottomToolbar /></div>
+            <div className="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2">
+              <div className="pointer-events-auto"><ColorPaintBar /></div>
+              <div className="pointer-events-auto"><BottomToolbar /></div>
+            </div>
             <WelcomeModal open={welcome} onClose={() => setWelcome(false)} />
           </ViewerContext.Provider>
         )}
