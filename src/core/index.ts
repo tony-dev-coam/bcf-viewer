@@ -5,6 +5,10 @@ import { createSelectionService } from './services/selection';
 import { createToolManager } from './tools/toolManager';
 import { createSelectTool } from './tools/selectTool';
 import { createTreeService } from './services/treeService';
+import { createCameraService } from './services/camera';
+import { createViewFromPlaneTool } from './tools/viewFromPlaneTool';
+import { createMeasureService } from './services/measure';
+import { createClipService } from './services/clip';
 import { parseItemData, ITEM_DATA_CONFIG, type ElementInfo } from './services/elementInfo';
 
 export async function createViewer(container: HTMLElement) {
@@ -12,7 +16,11 @@ export async function createViewer(container: HTMLElement) {
   const visibility = createVisibilityService(engine);
   const selection = createSelectionService(engine);
   const tools = createToolManager(engine);
+  const camera = createCameraService(engine);
   tools.register('select', createSelectTool(tools, selection, visibility));
+  tools.register('view-from-plane', createViewFromPlaneTool(tools, camera));
+  const measure = createMeasureService(engine, tools);
+  const clip = createClipService(engine, tools, selection);
   const trees = createTreeService(engine, visibility);
   const models = createModelService(engine, async () => {
     await trees.rebuild();
@@ -25,6 +33,9 @@ export async function createViewer(container: HTMLElement) {
     trees,
     visibility,
     selection,
+    camera,
+    measure,
+    clip,
     tools,
     /** EI-01: structured IFC data for one element. */
     async elementInfo(modelId: string, localId: number): Promise<ElementInfo | null> {
@@ -36,6 +47,7 @@ export async function createViewer(container: HTMLElement) {
     /** VI-03: visibility, tool mode and camera back to default. */
     async resetAll() {
       tools.exit();
+      await camera.reset();
       await selection.clear();
       await visibility.showAll();
       await visibility.fitAll();
