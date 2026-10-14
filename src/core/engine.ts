@@ -44,6 +44,8 @@ export async function createEngine(container: HTMLElement): Promise<Engine> {
   });
   fragments.list.onItemSet.add(({ value: model }) => {
     model.useCamera(world.camera.three);
+    // Models clip/cull against the renderer's live plane array (Clipper adds/removes planes in it).
+    model.useClippingPlanes(world.renderer!.clippingPlanes);
     world.scene.three.add(model.object);
     fragments.core.update(true);
   });

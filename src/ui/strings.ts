@@ -144,6 +144,16 @@ export const S = {
       invalidImage: 'Image not accepted – use PNG or JPG.',
     },
   },
+  settings: {
+    theme: 'Dark mode',
+    themeHint: 'Toggle between light/dark mode',
+    appearance: 'Model appearance',
+    appearanceHint: 'Turn off to improve performance',
+    outlines: 'Outlines',
+    depthShadows: 'Depth shadows',
+    antialiasing: 'Antialiasing (smooth edges)',
+    fixMissingFaces: 'Fix missing faces',
+  },
   tools: {
     groups: {
       selection: 'Selection', measurement: 'Measurement', clipping: 'Clipping', bcf: 'BCF',

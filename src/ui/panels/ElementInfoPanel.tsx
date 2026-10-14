@@ -91,7 +91,7 @@ export function ElementInfoPanel() {
             aria-controls="ei-tabpanel"
             disabled={!groups.length}
             onClick={() => setTabKey(key)}
-            className={`cursor-pointer rounded-lg border-0 px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-40 ${
+            className={`cursor-pointer rounded-lg border-0 px-2 py-1 text-xs text-neutral-700 dark:text-neutral-200 disabled:cursor-not-allowed disabled:opacity-40 ${
               tabKey === key ? 'bg-white font-semibold shadow-sm dark:bg-neutral-700' : 'bg-transparent'
             }`}
           >

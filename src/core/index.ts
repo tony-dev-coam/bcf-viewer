@@ -4,6 +4,7 @@ import { createVisibilityService } from './services/visibility';
 import { createSelectionService } from './services/selection';
 import { createToolManager } from './tools/toolManager';
 import { createSelectTool } from './tools/selectTool';
+import { createMarqueeTool } from './tools/marqueeTool';
 import { createTreeService } from './services/treeService';
 import { createCameraService } from './services/camera';
 import { createViewFromPlaneTool } from './tools/viewFromPlaneTool';
@@ -11,6 +12,7 @@ import { createMeasureService } from './services/measure';
 import { createClipService } from './services/clip';
 import { createColorService } from './services/color';
 import { createBcfService } from './bcf/service';
+import { createSettingsService } from './services/settings';
 import { parseItemData, ITEM_DATA_CONFIG, type ElementInfo } from './services/elementInfo';
 
 export async function createViewer(container: HTMLElement) {
@@ -20,11 +22,13 @@ export async function createViewer(container: HTMLElement) {
   const tools = createToolManager(engine);
   const camera = createCameraService(engine);
   tools.register('select', createSelectTool(tools, selection, visibility));
+  tools.register('marquee', createMarqueeTool(engine, selection));
   tools.register('view-from-plane', createViewFromPlaneTool(tools, camera));
   const measure = createMeasureService(engine, tools);
   const clip = createClipService(engine, tools, selection);
   const color = createColorService(engine, tools, selection);
   const bcf = createBcfService({ engine, tools, selection, visibility, color, camera });
+  const settings = createSettingsService(engine);
   const trees = createTreeService(engine, visibility);
   const models = createModelService(engine, async () => {
     await trees.rebuild();
@@ -42,6 +46,7 @@ export async function createViewer(container: HTMLElement) {
     clip,
     color,
     bcf,
+    settings,
     tools,
     /** EI-01: structured IFC data for one element. */
     async elementInfo(modelId: string, localId: number): Promise<ElementInfo | null> {

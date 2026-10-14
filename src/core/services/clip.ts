@@ -11,10 +11,13 @@ export const MAX_PLANES = 10; // CL-01
 /** CL-01…05 on That Open's Clipper. */
 export function createClipService(engine: Engine, tools: ToolManager, selection: SelectionService) {
   const clipper = engine.components.get(OBC.Clipper);
+  // Fragments materials only clip with per-material (local) planes; global renderer planes are ignored.
+  clipper.localClippingPlanes = true;
   clipper.enabled = true;
   clipper.visible = true;
   const store = createStore({ planes: 0, enabled: true, helpersVisible: true, capReached: false });
   const sync = () => store.update({ planes: clipper.list.size, capReached: false });
+
   clipper.onAfterCreate.add(sync);
   clipper.onAfterDelete.add(sync);
 

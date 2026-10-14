@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { App as AntApp, ConfigProvider, Result, Spin } from 'antd';
-import { UploadOutlined, ProfileOutlined, ApartmentOutlined, CommentOutlined } from '@ant-design/icons';
+import { UploadOutlined, ProfileOutlined, ApartmentOutlined, CommentOutlined, QuestionOutlined, SettingOutlined } from '@ant-design/icons';
 import { createViewer, hasWebGL2, type Viewer } from '../core';
 import { ViewerContext, useStore, useViewer } from './viewer';
 import { antdTheme, tokens } from './theme';
@@ -18,7 +18,12 @@ import { BcfTopicPanel } from './bcf/BcfTopicPanel';
 import { PinsLayer } from './bcf/PinsLayer';
 import { AuthorDialog } from './bcf/AuthorDialog';
 import { useConfirmDiscard } from './bcf/useConfirmDiscard';
+import { SettingsPanel } from './panels/SettingsPanel';
+import { HelpPanel } from './panels/HelpPanel';
+import { createStore } from '../core/store';
 import { S } from './strings';
+
+const LIGHT = createStore({ theme: 'light' as 'light' | 'dark' });
 
 type DockPanel = Exclude<PanelId, 'topic'>;
 
@@ -50,8 +55,8 @@ function Shell() {
     trees: { icon: <ApartmentOutlined />, body: <TreesPanel /> },
     info: { icon: <ProfileOutlined />, body: <ElementInfoPanel /> },
     bcf: { icon: <CommentOutlined />, body: <BcfListPanel onOpenTopic={() => setTopicOpen(true)} /> },
-    help: undefined,
-    settings: undefined,
+    help: { icon: <QuestionOutlined />, body: <HelpPanel /> },
+    settings: { icon: <SettingOutlined />, body: <SettingsPanel /> },
   };
   const dock = panel && panels[panel];
 
@@ -91,6 +96,9 @@ export default function App() {
   const container = useRef<HTMLDivElement>(null);
   const [viewer, setViewer] = useState<Viewer | null>(null);
   const webgl = hasWebGL2();
+  const { theme } = useStore<{ theme: 'light' | 'dark' }>(viewer?.settings.store ?? LIGHT);
+  const dark = theme === 'dark';
+  useEffect(() => { document.documentElement.classList.toggle('dark', dark); }, [dark]);
 
   useEffect(() => {
     if (!webgl) return;
@@ -119,7 +127,7 @@ export default function App() {
   };
 
   return (
-    <ConfigProvider theme={antdTheme(false)}>
+    <ConfigProvider theme={antdTheme(dark)}>
       <AntApp className="h-full">
         <div className="relative h-full w-full overflow-hidden" style={{ ['--brand' as string]: tokens.primary, ['--accent' as string]: tokens.accent }}>
           <div ref={container} className="absolute inset-0" onDragOver={(e) => e.preventDefault()} onDrop={onDrop} data-testid="viewport" />

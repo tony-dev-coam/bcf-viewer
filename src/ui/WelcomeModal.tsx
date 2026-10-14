@@ -16,6 +16,8 @@ export function WelcomeModal({ open, onClose }: { open: boolean; onClose(): void
           <div>
             <h3 className="mb-2 font-semibold">{S.welcome.load}</h3>
             <Upload.Dragger
+              className="block"
+              height={180}
               multiple
               accept=".ifc,.frag"
               showUploadList={false}
@@ -32,7 +34,7 @@ export function WelcomeModal({ open, onClose }: { open: boolean; onClose(): void
           <div>
             <h3 className="mb-2 font-semibold">{S.welcome.example}</h3>
             <button
-              className="h-[164px] w-full cursor-pointer rounded-lg border border-dashed border-neutral-300 bg-transparent text-4xl hover:border-[var(--brand)]"
+              className="h-[180px] w-full cursor-pointer rounded-lg border border-dashed border-neutral-300 bg-transparent text-4xl hover:border-[var(--brand)]"
               aria-label={S.welcome.example}
               onClick={() => { models.loadUrls(EXAMPLE_MODELS); onClose(); }}
             >

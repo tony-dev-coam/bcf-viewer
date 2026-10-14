@@ -14,6 +14,8 @@ export interface Tool {
   onClick?(e: PointerEvent): void;
   onDblClick?(e: MouseEvent): void;
   onMove?(e: PointerEvent): void;
+  onPointerDown?(e: PointerEvent): void;
+  onPointerUp?(e: PointerEvent): void;
   /** Return true when the key was handled. */
   onKey?(e: KeyboardEvent): boolean;
 }
@@ -37,8 +39,9 @@ export function createToolManager(engine: Engine) {
   }
 
   let down: { x: number; y: number } | null = null;
-  dom.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+  dom.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; current()?.onPointerDown?.(e); });
   dom.addEventListener('pointerup', (e) => {
+    current()?.onPointerUp?.(e);
     if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < CLICK_MOVE_PX && e.button === 0) current()?.onClick?.(e);
     down = null;
   });

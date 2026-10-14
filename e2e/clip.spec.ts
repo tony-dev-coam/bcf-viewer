@@ -10,6 +10,10 @@ test('clipping plane on a face, toggle, delete all (CL-01/03/05)', async ({ page
   await page.mouse.move(5, 300);
   await clickViewport(page, 0.5, 0.62);
   await expect.poll(() => planes(page)).toBe(1);
+  // Regression: planes must reach the fragments materials, or nothing is actually cut.
+  await expect.poll(() => page.evaluate(() =>
+    [...(window as any).__viewer.engine.fragments.core.models.materials.list.values()].every((m: any) => m.clippingPlanes?.length === 1),
+  )).toBe(true);
 
   menu = await openGroup(page, 'Clipping');
   await menu.getByRole('button', { name: 'Disable clipping' }).click();

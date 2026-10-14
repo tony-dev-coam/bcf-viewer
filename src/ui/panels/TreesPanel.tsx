@@ -149,7 +149,7 @@ export function TreesPanel() {
       <div role="tablist" className="grid grid-cols-3 gap-1 rounded-xl bg-neutral-100 p-1 dark:bg-neutral-800">
         {(Object.keys(S.trees.tabs) as TabKey[]).map((k) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => { setTab(k); setExpanded([]); }}
-            className={`cursor-pointer rounded-lg border-0 py-1 text-xs ${tab === k ? 'bg-white font-semibold shadow-sm dark:bg-neutral-700' : 'bg-transparent'}`}>
+            className={`cursor-pointer rounded-lg border-0 py-1 text-xs text-neutral-700 dark:text-neutral-200 ${tab === k ? 'bg-white font-semibold shadow-sm dark:bg-neutral-700' : 'bg-transparent'}`}>
             {S.trees.tabs[k]}
           </button>
         ))}
