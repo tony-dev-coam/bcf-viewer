@@ -1,0 +1,8 @@
+# ai-devkit skill symlinks (machine-local; reinstall from .ai-devkit.json)
+.agents/
+.claude/skills/
+.cursor/skills/
+
+node_modules/
+dist/
+.DS_Store
