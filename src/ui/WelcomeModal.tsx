@@ -3,10 +3,17 @@ import { InboxOutlined, CheckOutlined } from '@ant-design/icons';
 import { useViewer } from './viewer';
 import { S } from './strings';
 
-export const EXAMPLE_MODELS = ['/examples/school_str.ifc'];
+export const EXAMPLE_MODELS = ['/examples/school_arq.frag', '/examples/school_str.frag'];
+const EXAMPLE_BCF = '/examples/demo.bcfzip';
 
 export function WelcomeModal({ open, onClose }: { open: boolean; onClose(): void }) {
-  const { models } = useViewer();
+  const { models, bcf } = useViewer();
+  const loadExample = async () => {
+    onClose();
+    await models.loadUrls(EXAMPLE_MODELS);
+    const blob = await (await fetch(EXAMPLE_BCF)).blob();
+    await bcf.importFile(new File([blob], 'demo.bcfzip'));
+  };
   return (
     <Modal open={open} onCancel={onClose} footer={null} width={660} centered>
       <div className="flex flex-col items-center gap-4 py-4 text-center">
@@ -36,7 +43,7 @@ export function WelcomeModal({ open, onClose }: { open: boolean; onClose(): void
             <button
               className="h-[180px] w-full cursor-pointer rounded-lg border border-dashed border-neutral-300 bg-transparent text-4xl hover:border-[var(--brand)]"
               aria-label={S.welcome.example}
-              onClick={() => { models.loadUrls(EXAMPLE_MODELS); onClose(); }}
+              onClick={loadExample}
             >
               🏢
             </button>

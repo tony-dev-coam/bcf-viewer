@@ -1,4 +1,5 @@
 import * as OBC from '@thatopen/components';
+import { fixColoringForExport } from '../bcf/coloring';
 
 /**
  * Upstream bug (components 3.4.x): Viewpoint.createComponentTags() with includeSelectionTag=false writes
@@ -22,7 +23,7 @@ export function patchBcfExceptions() {
 
 /**
  * Upstream gap (components 3.4.x): Viewpoint.serialize() never writes <ClippingPlanes>, although import reads
- * them. Insert them after the camera element (BCF schema order: Components, Camera, Lines, ClippingPlanes, Bitmaps).
+ * them. Insert them after the camera element. Also fixes <Coloring> to the target schema (see bcf/coloring.ts) (BCF schema order: Components, Camera, Lines, ClippingPlanes, Bitmaps).
  */
 export function patchBcfClippingPlanes() {
   type Vec = { x: number; y: number; z: number };
@@ -32,7 +33,8 @@ export function patchBcfClippingPlanes() {
   };
   const original = proto.serialize;
   proto.serialize = async function (this: typeof proto, version) {
-    const xml = await original.call(this, version);
+    const target = version ?? (this as unknown as { _components: OBC.Components })._components.get(OBC.BCFTopics).config.version;
+    const xml = fixColoringForExport(await original.call(this, version), target);
     const planes = this.toJSON().clipping_planes ?? [];
     if (!planes.length) return xml;
     const v = (tag: string, p: Vec) => `<${tag}><X>${p.x}</X><Y>${p.y}</Y><Z>${p.z}</Z></${tag}>`;

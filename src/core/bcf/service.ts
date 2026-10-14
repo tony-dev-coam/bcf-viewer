@@ -10,6 +10,7 @@ import type { CameraService } from '../services/camera';
 import type { Tool, ToolManager } from '../tools/toolManager';
 import type { IdMap } from '../services/selectionRules';
 import { patchBcfExceptions, patchBcfClippingPlanes } from '../patches/bcf';
+import { normalizeBcfForImport } from './coloring';
 import { visibilityForViewpoint, type TopicRow, type TopicFilters } from './helpers';
 
 patchBcfExceptions();
@@ -184,7 +185,17 @@ export function createBcfService(deps: {
   async function importFile(file: File) {
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const { topics } = await bcf.load(bytes);
+      // BCFTopics unzips snapshots with JSZip in async chunks; each chunk otherwise waits behind a 3D frame.
+      // Pausing rendering makes import time independent of model size / GPU speed.
+      const renderer = world.renderer!;
+      const wasEnabled = renderer.enabled;
+      renderer.enabled = false;
+      let topics: OBC.Topic[];
+      try {
+        ({ topics } = await bcf.load(normalizeBcfForImport(bytes)));
+      } finally {
+        renderer.enabled = wasEnabled;
+      }
       try {
         const entry = unzipSync(bytes, { filter: (f) => f.name === PINS_FILE })[PINS_FILE];
         if (entry) for (const [g, p] of Object.entries(JSON.parse(strFromU8(entry)) as Record<string, [number, number, number]>)) pins.set(g, p);
@@ -264,8 +275,9 @@ export function createBcfService(deps: {
       if (pinTarget.vpGuid) {
         pins.set(pinTarget.vpGuid, p);
       } else {
-        await api.startCreate();
+        // Capture before the session exists, so nothing can save/cancel it half-built.
         const vp = await capture();
+        await api.startCreate();
         const t = sessionTopic();
         t.viewpoints.add(vp.guid);
         pins.set(vp.guid, p);

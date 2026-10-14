@@ -3,9 +3,11 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import * as OBC from '@thatopen/components';
-import { patchBcfExceptions } from '../patches/bcf';
+import { patchBcfExceptions, patchBcfClippingPlanes } from '../patches/bcf';
+import { normalizeBcfForImport } from './coloring';
 
 patchBcfExceptions();
+patchBcfClippingPlanes();
 
 const DIR = process.env.BCF_SAMPLES ?? '';
 const files = DIR && existsSync(DIR) ? readdirSync(DIR).filter((f) => f.endsWith('.bcf')) : [];
@@ -37,7 +39,7 @@ async function load(bytes: Uint8Array, version?: '2.1' | '3') {
   const components = new OBC.Components();
   const bcf = components.get(OBC.BCFTopics);
   bcf.setup({ version: version ?? '3', strict: false, updateExtensionsOnImport: true, ignoreIncompleteTopicsOnImport: false });
-  await bcf.load(bytes);
+  await bcf.load(normalizeBcfForImport(bytes));
   return components;
 }
 
