@@ -1,0 +1,10 @@
+/* antd (CSS-in-JS, injected into @layer antd) sits between Tailwind theme and utilities; no Tailwind preflight. */
+@layer theme, antd, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@custom-variant dark (&:where(.dark, .dark *));
+
+html, body, #root { height: 100%; margin: 0; }
+body { background: var(--app-bg); font-family: Inter, system-ui, sans-serif; }
+:root { --app-bg: #efefef; }
+:root.dark { --app-bg: #1b1d21; }
