@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { loadExample } from './helpers';
 
 test('loads the example model and lists it in File Management (WL-04, FM-01/03)', async ({ page }) => {
   await page.goto('/');

@@ -13,7 +13,12 @@ export function isEmptyMap(map: ModelIdMap): boolean {
 export function createVisibilityService(engine: Engine) {
   const hider = engine.components.get(OBC.Hider);
   const store = createStore({ version: 0, isolated: false });
-  const changed = (isolated = store.getSnapshot().isolated) => store.set({ version: store.getSnapshot().version + 1, isolated });
+  // Items that "show all" must not reveal (MT-08: spaces/openings while their toggle is off).
+  let alwaysHidden: () => Promise<ModelIdMap> = async () => ({});
+  const changed = (isolated = store.getSnapshot().isolated) => {
+    void engine.fragments.core.update(true);
+    store.set({ version: store.getSnapshot().version + 1, isolated });
+  };
 
   async function fitBox(box: THREE.Box3) {
     if (box.isEmpty()) return;
@@ -39,9 +44,14 @@ export function createVisibilityService(engine: Engine) {
     },
     async showAll() {
       await hider.set(true);
+      const keep = await alwaysHidden();
+      if (!isEmptyMap(keep)) await hider.set(false, keep);
       changed(false);
     },
-    /** Visible element ids per model, for tree eye toggles. */
+    setAlwaysHidden(getter: () => Promise<ModelIdMap>) {
+      alwaysHidden = getter;
+    },
+    /** Visible element ids per model (geometry items only), for tree eye toggles. */
     visibleMap: () => hider.getVisibilityMap(true),
     async fitAll() {
       const box = new THREE.Box3();
