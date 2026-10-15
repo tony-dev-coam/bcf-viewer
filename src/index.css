@@ -8,3 +8,7 @@ html, body, #root { height: 100%; margin: 0; }
 body { background: var(--app-bg); font-family: Inter, system-ui, sans-serif; }
 :root { --app-bg: #efefef; }
 :root.dark { --app-bg: #1b1d21; }
+
+/* Let tree row titles shrink so long names ellipsize instead of pushing the swatch/eye out of view. */
+.ant-tree-node-content-wrapper { min-width: 0; }
+.ant-tree-title { display: block; min-width: 0; }

@@ -200,8 +200,10 @@ export const S = {
     zoomToSelected: 'Zoom to selection',
     showAll: 'Show all',
     hideSelected: 'Hide selected',
-    isolateSelected: 'Isolate selected',
+    isolate: 'Isolate | Show all',
     resetAll: 'Reset all',
   },
+  contextMenu: 'Context menu',
+  close: 'Close',
   webgl2Missing: 'Your browser does not support WebGL2, which is required to display 3D models.',
 } as const;

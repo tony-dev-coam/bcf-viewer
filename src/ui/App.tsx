@@ -13,6 +13,7 @@ import { WelcomeModal } from './WelcomeModal';
 import { Toolbar } from './layout/Toolbar';
 import { useToolGroups } from './useToolGroups';
 import { ColorPaintBar } from './ColorPaintBar';
+import { RadialMenu } from './RadialMenu';
 import { BcfListPanel } from './bcf/BcfListPanel';
 import { BcfTopicPanel } from './bcf/BcfTopicPanel';
 import { PinsLayer } from './bcf/PinsLayer';
@@ -27,7 +28,7 @@ const LIGHT = createStore({ theme: 'light' as 'light' | 'dark' });
 
 type DockPanel = Exclude<PanelId, 'topic'>;
 
-function Shell() {
+function Shell({ viewport }: { viewport: React.RefObject<HTMLDivElement | null> }) {
   const viewer = useViewer();
   const { active, session, author } = useStore(viewer.bcf.store);
   const [panel, setPanel] = useState<DockPanel | null>('trees');
@@ -63,6 +64,7 @@ function Shell() {
   return (
     <>
       <PinsLayer onOpen={openTopic} />
+      <RadialMenu viewport={viewport} groups={groups} />
       <div className="pointer-events-none absolute inset-3 flex items-start gap-2">
         <div className="pointer-events-auto h-full">
           <Rail
@@ -135,7 +137,7 @@ export default function App() {
           {webgl && !viewer && <Spin className="absolute inset-0 m-auto h-fit" size="large" />}
           {viewer && (
             <ViewerContext.Provider value={viewer}>
-              <Shell />
+              <Shell viewport={container} />
             </ViewerContext.Provider>
           )}
         </div>

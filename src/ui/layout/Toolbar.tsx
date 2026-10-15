@@ -1,5 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Popover, Tooltip } from 'antd';
+import { createStore } from '../../core/store';
+import { useStore } from '../viewer';
 
 export interface ToolItem {
   key: string;
@@ -17,6 +19,14 @@ export interface ToolGroupDef {
   label: string;
   tone: 'interaction' | 'view' | 'neutral';
   items: ToolItem[]; // last item = default shown on the group button
+}
+
+/** Last item used per group (key → item key), shared by the toolbar and the right-click radial menu. */
+export const lastUsed = createStore<Record<string, string>>({});
+
+/** A group button shows the active item, else the last one used, else the default (last). */
+export function shownItem(group: ToolGroupDef, last: Record<string, string>): ToolItem {
+  return group.items.find((i) => i.active) ?? group.items.find((i) => i.key === last[group.key]) ?? group.items.at(-1)!;
 }
 
 const ring = { interaction: 'border-[var(--accent)]', view: 'border-[var(--brand)]', neutral: 'border-transparent' };
@@ -41,10 +51,8 @@ function ItemButton({ item, tone, size = 40 }: { item: ToolItem; tone: ToolGroup
 }
 
 function ToolGroup({ group }: { group: ToolGroupDef }) {
-  // The group button shows the active item, else the last one used, else the default (last).
-  const [last, setLast] = useState(group.items.length - 1);
-  const shown = group.items.find((i) => i.active) ?? group.items[last] ?? group.items[0];
-  const items = group.items.map((i, idx) => ({ ...i, onClick: () => { setLast(idx); i.onClick(); } }));
+  const shown = shownItem(group, useStore(lastUsed));
+  const items = group.items.map((i) => ({ ...i, onClick: () => { lastUsed.update({ [group.key]: i.key }); i.onClick(); } }));
   const menu = (
     <div className="flex flex-col-reverse gap-2" role="menu" aria-label={group.label}>
       {items.map((i) => <ItemButton key={i.key} item={i} tone={group.tone} />)}

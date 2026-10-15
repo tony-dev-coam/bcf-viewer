@@ -1,4 +1,4 @@
-import { EnvironmentOutlined, BgColorsOutlined, FormatPainterOutlined, ClearOutlined, FileOutlined, ScissorOutlined, GatewayOutlined as BoxIcon, StopOutlined, ColumnHeightOutlined, LineOutlined, GatewayOutlined, BorderOutlined, AppstoreOutlined, DeleteOutlined, GlobalOutlined, SendOutlined, RocketOutlined, CodeSandboxOutlined, BlockOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined, BorderOuterOutlined, SelectOutlined, ExpandOutlined, AimOutlined, EyeOutlined, UndoOutlined, EyeInvisibleOutlined, BorderInnerOutlined } from '@ant-design/icons';
+import { EnvironmentOutlined, BgColorsOutlined, FormatPainterOutlined, ClearOutlined, FileOutlined, ScissorOutlined, GatewayOutlined as BoxIcon, StopOutlined, ColumnHeightOutlined, LineOutlined, GatewayOutlined, BorderOutlined, AppstoreOutlined, DeleteOutlined, GlobalOutlined, SendOutlined, RocketOutlined, CodeSandboxOutlined, BlockOutlined, VerticalAlignTopOutlined, VerticalAlignBottomOutlined, BorderOuterOutlined, SelectOutlined, ExpandOutlined, AimOutlined, EyeOutlined, UndoOutlined, EyeInvisibleOutlined, BorderInnerOutlined, ColumnWidthOutlined } from '@ant-design/icons';
 import { useStore, useViewer } from './viewer';
 import type { ToolGroupDef } from './layout/Toolbar';
 import type { ToolId } from '../core';
@@ -14,6 +14,7 @@ export function useToolGroups(onNewTopicWithPin: () => void): ToolGroupDef[][] {
   const clip = useStore(v.clip.store);
   const col = useStore(v.color.store);
   const bcfs = useStore(v.bcf.store);
+  const vis = useStore(v.visibility.store);
   const mode = (id: ToolId, label: string, icon: React.ReactNode) => ({
     key: id, label, icon, active: active === id, kind: 'mode' as const, onClick: () => v.tools.activate(id),
   });
@@ -91,6 +92,7 @@ export function useToolGroups(onNewTopicWithPin: () => void): ToolGroupDef[][] {
         label: S.tools.groups.visibility,
         tone: 'neutral',
         items: [
+          cmd('isolate', S.tools.isolate, <ColumnWidthOutlined />, () => (vis.isolated ? v.visibility.showAll() : v.visibility.isolate(items())), !count && !vis.isolated),
           cmd('zoom-all', S.tools.zoomToAll, <ExpandOutlined />, () => v.visibility.fitAll()),
           cmd('zoom-sel', S.tools.zoomToSelected, <AimOutlined />, () => v.visibility.fitItems(items()), !count),
           cmd('hide-sel', S.tools.hideSelected, <EyeInvisibleOutlined />, () => v.visibility.hide(items()), !count),

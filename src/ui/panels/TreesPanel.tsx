@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, ColorPicker, Empty, Input, Spin, Tooltip, Tree } from 'antd';
+import { Button, ColorPicker, Empty, Input, Spin, Tooltip, Tree, Typography } from 'antd';
 import {
   SearchOutlined, PlusSquareOutlined, MinusSquareOutlined, AimOutlined, EyeOutlined, EyeInvisibleOutlined,
   BorderOutlined, HomeOutlined, ColumnWidthOutlined,
@@ -25,7 +25,7 @@ function filterTree(nodes: TreeNode[], q: string): TreeNode[] {
   const out: TreeNode[] = [];
   for (const n of nodes) {
     const kids = n.children ? filterTree(n.children, q) : [];
-    if (`${n.title} ${n.ifcClass ?? ''}`.toLowerCase().includes(q) || kids.length) out.push({ ...n, children: kids.length ? kids : n.children && undefined });
+    if (`${n.title} ${n.label ?? ''} ${n.ifcClass ?? ''}`.toLowerCase().includes(q) || kids.length) out.push({ ...n, children: kids.length ? kids : n.children && undefined });
   }
   return out;
 }
@@ -148,7 +148,7 @@ export function TreesPanel() {
     <div className="flex h-full flex-col gap-2">
       <div role="tablist" className="grid grid-cols-3 gap-1 rounded-xl bg-neutral-100 p-1 dark:bg-neutral-800">
         {(Object.keys(S.trees.tabs) as TabKey[]).map((k) => (
-          <button key={k} role="tab" aria-selected={tab === k} onClick={() => { setTab(k); setExpanded([]); }}
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => { setTab(k); setExpanded(k === 'storeys' ? trees.storeys.map((n) => n.key) : []); }}
             className={`cursor-pointer rounded-lg border-0 py-1 text-xs text-neutral-700 dark:text-neutral-200 ${tab === k ? 'bg-white font-semibold shadow-sm dark:bg-neutral-700' : 'bg-transparent'}`}>
             {S.trees.tabs[k]}
           </button>
@@ -188,19 +188,22 @@ export function TreesPanel() {
               const off = isHidden(node);
               return (
                 <div className={`group flex items-center gap-1 ${off ? 'opacity-50' : ''}`} onClick={(e) => onRowClick(e, node)}>
-                  <span className={`min-w-0 flex-1 truncate ${node.isGroup || node.key.split(':').length < 3 ? 'font-semibold' : ''}`} title={node.ifcClass ? `${node.title} (${node.ifcClass})` : node.title}>
+                  {/* Labelled rows (storey levels / model storeys) are headers: bold title, label right-aligned. */}
+                  {/* Ellipsis + tooltip only when the name is actually cut off. */}
+                  <Typography.Text className={`min-w-0 flex-1 ${node.isGroup || node.label || node.key.split(':').length < 3 ? 'font-semibold' : ''}`} ellipsis={{ tooltip: node.ifcClass ? `${node.title} (${node.ifcClass})` : node.title }}>
                     {node.title}
-                  </span>
+                  </Typography.Text>
+                  {node.label && <span className="shrink-0 truncate">{node.label}</span>}
                   <Swatch
                     color={nodeColor(node)}
-                    label={node.title}
+                    label={node.label ? `${node.title} ${node.label}` : node.title}
                     onPick={(hex) => {
                       const items = selectedKeys.includes(node.key) ? selected : collectItems(node);
                       return hex ? viewer.color.paint(items, hex) : viewer.color.erase(items);
                     }}
                   />
                   <button
-                    aria-label={`${S.trees.toggleVisibility} ${node.title}`}
+                    aria-label={`${S.trees.toggleVisibility} ${node.label ? `${node.title} ${node.label}` : node.title}`}
                     className="cursor-pointer border-0 bg-transparent p-0.5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
                     onClick={(e) => { e.stopPropagation(); toggleVisible(node); }}
                   >

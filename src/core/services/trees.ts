@@ -6,6 +6,8 @@ export interface SpatialNode { category: string | null; localId: number | null; 
 export interface TreeNode {
   key: string;
   title: string;
+  /** Secondary text shown right-aligned in the row (e.g. storey name next to its model). */
+  label?: string;
   ifcClass?: string;
   /** Category grouping node inside the spatial tree (e.g. all IFCWALL under a storey). */
   isGroup?: boolean;
@@ -65,21 +67,41 @@ export function buildTypesTree(models: ModelCategories[]): TreeNode[] {
   return [...byClass.keys()].sort().map((cls) => ({ key: `t:${cls}`, title: cls, isGroup: true, children: byClass.get(cls) }));
 }
 
-export interface StoreyInfo { localId: number; name: string; elevation: number; elements: number[] }
+export interface StoreyInfo { localId: number; name: string; elevation: number; children?: TreeNode[] }
 
-const STOREY_TOLERANCE_M = 1; // MT-03: storeys of federated models within ±1 m are the same level
+const STOREY_TOLERANCE_M = 1; // MT-03: storeys of federated models less than 1 m apart are the same level (-1 m and 0 m stay apart, as in the reference)
 
-export function buildStoreysTree(models: { modelId: string; storeys: StoreyInfo[] }[], nameOf: (modelId: string, id: number) => string): TreeNode[] {
+/** Reference layout: ELEVATIONGROUP "Level X.XXm" → one row per model storey (model name, storey name) → its elements. */
+export function buildStoreysTree(models: { modelId: string; storeys: StoreyInfo[] }[]): TreeNode[] {
   const levels: { elevation: number; node: TreeNode }[] = [];
   const all = models.flatMap(({ modelId, storeys }) => storeys.map((s) => ({ modelId, s }))).sort((a, b) => a.s.elevation - b.s.elevation);
   for (const { modelId, s } of all) {
-    let level = levels.find((l) => Math.abs(l.elevation - s.elevation) <= STOREY_TOLERANCE_M);
+    let level = levels.find((l) => Math.abs(l.elevation - s.elevation) < STOREY_TOLERANCE_M);
     if (!level) {
-      level = { elevation: s.elevation, node: { key: `s:${levels.length}`, title: s.name, ifcClass: 'IFCBUILDINGSTOREY', own: {}, children: [] } };
+      level = { elevation: s.elevation, node: { key: `s:${levels.length}`, title: 'ELEVATIONGROUP', label: `Level ${s.elevation.toFixed(2)}m`, isGroup: true, children: [] } };
       levels.push(level);
     }
-    (level.node.own![modelId] ??= new Set()).add(s.localId);
-    level.node.children!.push(...s.elements.map((id) => ({ key: `s:${modelId}:${id}`, title: nameOf(modelId, id) || String(id), own: { [modelId]: new Set([id]) } })));
+    level.node.children!.push({ key: `s:${modelId}:${s.localId}`, title: modelId, label: s.name, ifcClass: 'IFCBUILDINGSTOREY', own: { [modelId]: new Set([s.localId]) }, children: s.children });
   }
   return levels.map((l) => l.node);
+}
+
+/**
+ * Rebuilds the Fragments spatial-tree shape (entity → category group → entity …) from a parent → children map.
+ * Used for frags whose getSpatialStructure() is empty because their converter named relations differently.
+ */
+export function spatialFromRelations(rootId: number, children: Map<number, number[]>, cats: Map<number, string>): SpatialNode {
+  const seen = new Set<number>();
+  const entity = (id: number): SpatialNode => {
+    seen.add(id);
+    const groups = new Map<string, SpatialNode[]>();
+    for (const c of children.get(id) ?? []) {
+      if (seen.has(c)) continue; // guard against cyclic relation data
+      const cat = cats.get(c) ?? 'UNKNOWN';
+      (groups.get(cat) ?? groups.set(cat, []).get(cat)!).push(entity(c));
+    }
+    const kids = [...groups].map(([category, ns]) => ({ category, localId: null, children: ns }));
+    return { category: null, localId: id, children: kids.length ? kids : undefined };
+  };
+  return { category: cats.get(rootId) ?? 'IFCPROJECT', localId: null, children: [entity(rootId)] };
 }

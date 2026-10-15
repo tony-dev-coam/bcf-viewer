@@ -22,8 +22,8 @@ test('model trees: relations, types, storeys, search, select, hide (MT-01…07)'
 
   // Hide the storey via its eye; it becomes dimmed / eye-closed.
   await panel.getByRole('tab', { name: 'Storeys' }).click();
-  await tree.getByRole('button', { name: 'Show / hide 03 - Floor' }).click();
-  await expect(tree.getByRole('button', { name: 'Show / hide 03 - Floor' }).locator('[aria-label="eye-invisible"]')).toBeVisible();
+  await tree.getByRole('button', { name: 'Show / hide school_str 03 - Floor' }).click();
+  await expect(tree.getByRole('button', { name: 'Show / hide school_str 03 - Floor' }).locator('[aria-label="eye-invisible"]')).toBeVisible();
 
   // Search filters the tree.
   await panel.getByRole('tab', { name: 'Types' }).click();
