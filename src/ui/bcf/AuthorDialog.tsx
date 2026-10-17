@@ -3,7 +3,12 @@ import { Checkbox, Input, Modal } from 'antd';
 import { useStore, useViewer } from '../viewer';
 import { S } from '../strings';
 
-export function AuthorDialog({ open, onClose }: { open: boolean; onClose(saved: boolean): void }) {
+interface AuthorDialogProps {
+  open: boolean;
+  onClose(saved: boolean): void;
+}
+
+export function AuthorDialog({ open, onClose }: AuthorDialogProps) {
   const { bcf } = useViewer();
   const { author } = useStore(bcf.store);
   const [value, setValue] = useState(author);

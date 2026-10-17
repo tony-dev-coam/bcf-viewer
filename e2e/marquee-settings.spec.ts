@@ -6,7 +6,7 @@ const selCount = (page: Page) => page.evaluate(() => (window as any).__viewer.se
 test('marquee: crossing box selects more than window box (SE-02)', async ({ page }) => {
   await loadExample(page);
   const menu = await openGroup(page, 'Selection');
-  await menu.getByRole('button', { name: 'Marquee selection' }).click();
+  await menu.getByRole('button', { name: 'Selection rectangle' }).click();
   await page.mouse.move(5, 300);
   const b = (await page.getByTestId('viewport').boundingBox())!;
   const drag = async (x1: number, y1: number, x2: number, y2: number) => {
@@ -18,6 +18,9 @@ test('marquee: crossing box selects more than window box (SE-02)', async ({ page
   await drag(0.45, 0.55, 0.6, 0.75); // left → right: fully inside
   await expect.poll(() => selCount(page)).toBeGreaterThan(0);
   const windowCount = await selCount(page);
+  // One-shot: the box hands back to Select, so pick the rectangle again.
+  await expect.poll(() => page.evaluate(() => (window as any).__viewer.tools.store.getSnapshot().active)).toBe('select');
+  await (await openGroup(page, 'Selection')).getByRole('button', { name: 'Selection rectangle' }).click();
   await drag(0.6, 0.75, 0.45, 0.55); // right → left: touching too
   await expect.poll(() => selCount(page)).toBeGreaterThan(windowCount);
 });

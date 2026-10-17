@@ -5,6 +5,6 @@ export default {
   testDir: '.',
   testMatch: 'make-demo-bcf.spec.ts',
   workers: 1,
-  timeout: 600_000,
+  timeout: 7_200_000,
   webServer: { ...(base.webServer as object), cwd: '..' },
 };

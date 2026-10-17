@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, ColorPicker, Empty, Input, Spin, Tooltip, Tree, Typography } from 'antd';
 import {
   SearchOutlined, PlusSquareOutlined, MinusSquareOutlined, AimOutlined, EyeOutlined, EyeInvisibleOutlined,
-  BorderOutlined, HomeOutlined, ColumnWidthOutlined,
+  BorderOutlined, HomeOutlined, ColumnWidthOutlined, PlusOutlined,
 } from '@ant-design/icons';
 import { collectItems, type TreeNode } from '../../core';
 import { useStore, useViewer } from '../viewer';
@@ -164,6 +164,7 @@ export function TreesPanel() {
         <div className="flex gap-0.5">
           {iconBtn(S.trees.spaces, <HomeOutlined />, () => viewer.trees.setShowSpaces(!trees.showSpaces), { active: trees.showSpaces })}
           {iconBtn(S.trees.openings, <BorderOutlined />, () => viewer.trees.setShowOpenings(!trees.showOpenings), { active: trees.showOpenings })}
+          {iconBtn(S.trees.showSelected, <PlusOutlined />, () => viewer.visibility.show(selected), { disabled: !count })}
           {iconBtn(S.trees.hideSelected, <EyeInvisibleOutlined />, () => viewer.visibility.hide(selected), { disabled: !count })}
           {iconBtn(S.trees.isolate, <ColumnWidthOutlined />, () => (viewer.visibility.store.getSnapshot().isolated ? viewer.visibility.showAll() : viewer.visibility.isolate(selected)), { disabled: !count && !viewer.visibility.store.getSnapshot().isolated })}
           {iconBtn(S.trees.showAll, <EyeOutlined />, () => viewer.visibility.showAll())}
@@ -219,7 +220,13 @@ export function TreesPanel() {
   );
 }
 
-function Swatch({ color, label, onPick }: { color: string | null | 'mixed'; label: string; onPick(hex: string | null): void }) {
+interface SwatchProps {
+  color: string | null | 'mixed';
+  label: string;
+  onPick(hex: string | null): void;
+}
+
+function Swatch({ color, label, onPick }: SwatchProps) {
   const style =
     color === 'mixed'
       ? { background: 'conic-gradient(#e74c3c, #f1c40f, #2ecc71, #3498db, #9b59b6, #e74c3c)' }

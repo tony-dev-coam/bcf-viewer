@@ -8,7 +8,11 @@ const PALETTE = ['#4aa3c9', '#b7cf5a', '#f39a5f', '#9b7fd1', '#e5677a', '#5cc6a7
 const colorFor = (value: string | undefined, values: string[]) => (value ? PALETTE[values.indexOf(value) % PALETTE.length] : '#9aa0a6');
 
 /** BT-04 / BM-06: topic pins drawn as an HTML overlay projected from 3D on every camera change. */
-export function PinsLayer({ onOpen }: { onOpen(topicGuid: string): void }) {
+interface PinsLayerProps {
+  onOpen(topicGuid: string): void;
+}
+
+export function PinsLayer({ onOpen }: PinsLayerProps) {
   const viewer = useViewer();
   const { rows, query, filters, pinsVisible, pinColorBy, active } = useStore(viewer.bcf.store);
   const [, setFrame] = useState(0);
@@ -46,12 +50,21 @@ export function PinsLayer({ onOpen }: { onOpen(topicGuid: string): void }) {
             <button
               aria-label={`Pin: ${row.title}`}
               onClick={() => onOpen(p.topicGuid)}
-              className="pointer-events-auto absolute -translate-x-1/2 -translate-y-full cursor-pointer border-0 bg-transparent p-0"
-              style={{ left: x, top: y }}
+              className={`bcf-pin pointer-events-auto absolute cursor-pointer border-0 bg-transparent p-0 ${isActive ? 'is-active z-10' : ''}`}
+              style={{ left: x, top: y, color: colorFor(row[pinColorBy] as string | undefined, values) }}
             >
-              <svg width="26" height="36" viewBox="0 0 24 36" aria-hidden>
-                <path d="M12 0C5.383 0 0 5.383 0 12c0 9 12 24 12 24s12-15 12-24C24 5.383 18.617 0 12 0z" fill={colorFor(row[pinColorBy] as string | undefined, values)} stroke={isActive ? '#1b1d21' : 'white'} strokeWidth="1.5" />
-                {isActive ? <text x="12" y="16" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">{p.number}</text> : <circle cx="12" cy="12" r="4.5" fill="white" />}
+              {/* Survey stake: head + leader line, so the anchor dot sits exactly on the 3D point instead of under a teardrop. */}
+              <svg width="32" height="44" viewBox="-16 -40 32 44" overflow="visible" aria-hidden>
+                <ellipse cx="0" cy="0" rx="6" ry="2.2" fill="black" opacity=".25" />
+                {isActive && <circle className="bcf-pin-ripple" cx="0" cy="0" r="5" fill="none" stroke="currentColor" strokeWidth="2" />}
+                <g className="bcf-pin-stake">
+                  <line x1="0" y1="0" x2="0" y2="-20" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="0" cy="0" r="3" fill="currentColor" stroke="white" strokeWidth="1.5" />
+                  <circle cx="0" cy="-28" r={isActive ? 11 : 9} fill="currentColor" stroke={isActive ? '#1b1d21' : 'white'} strokeWidth="2" />
+                  {isActive
+                    ? <text x="0" y="-24.5" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">{p.number}</text>
+                    : <circle cx="0" cy="-28" r="3" fill="white" />}
+                </g>
               </svg>
             </button>
           </Tooltip>

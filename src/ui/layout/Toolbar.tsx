@@ -31,7 +31,13 @@ export function shownItem(group: ToolGroupDef, last: Record<string, string>): To
 
 const ring = { interaction: 'border-[var(--accent)]', view: 'border-[var(--brand)]', neutral: 'border-transparent' };
 
-function ItemButton({ item, tone, size = 40 }: { item: ToolItem; tone: ToolGroupDef['tone']; size?: number }) {
+interface ItemButtonProps {
+  item: ToolItem;
+  tone: ToolGroupDef['tone'];
+  size?: number;
+}
+
+function ItemButton({ item, tone, size = 40 }: ItemButtonProps) {
   return (
     <Tooltip title={item.label} placement="right" mouseEnterDelay={0.2}>
       <button
@@ -50,7 +56,11 @@ function ItemButton({ item, tone, size = 40 }: { item: ToolItem; tone: ToolGroup
   );
 }
 
-function ToolGroup({ group }: { group: ToolGroupDef }) {
+interface ToolGroupProps {
+  group: ToolGroupDef;
+}
+
+function ToolGroup({ group }: ToolGroupProps) {
   const shown = shownItem(group, useStore(lastUsed));
   const items = group.items.map((i) => ({ ...i, onClick: () => { lastUsed.update({ [group.key]: i.key }); i.onClick(); } }));
   const menu = (
@@ -68,7 +78,11 @@ function ToolGroup({ group }: { group: ToolGroupDef }) {
   );
 }
 
-export function Toolbar({ groups }: { groups: ToolGroupDef[][] }) {
+interface ToolbarProps {
+  groups: ToolGroupDef[][];
+}
+
+export function Toolbar({ groups }: ToolbarProps) {
   return (
     <div className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2 shadow-sm dark:bg-neutral-900" role="toolbar" aria-label="Tools">
       {groups.map((section, i) => (

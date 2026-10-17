@@ -28,7 +28,11 @@ const LIGHT = createStore({ theme: 'light' as 'light' | 'dark' });
 
 type DockPanel = Exclude<PanelId, 'topic'>;
 
-function Shell({ viewport }: { viewport: React.RefObject<HTMLDivElement | null> }) {
+interface ShellProps {
+  viewport: React.RefObject<HTMLDivElement | null>;
+}
+
+function Shell({ viewport }: ShellProps) {
   const viewer = useViewer();
   const { active, session, author } = useStore(viewer.bcf.store);
   const [panel, setPanel] = useState<DockPanel | null>('trees');

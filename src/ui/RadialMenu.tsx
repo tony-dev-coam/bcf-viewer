@@ -21,7 +21,17 @@ const CLICK_SLOP = 5; // px; a right-drag (camera pan) must not open the menu
 
 const polar = (r: number, deg: number) => ({ x: r * Math.cos((deg * Math.PI) / 180), y: r * Math.sin((deg * Math.PI) / 180) });
 
-function RadialButton({ item, x, y, size, onPick, onHover, current }: { item: ToolItem; x: number; y: number; size: number; onPick(): void; onHover?(): void; current?: boolean }) {
+interface RadialButtonProps {
+  item: ToolItem;
+  x: number;
+  y: number;
+  size: number;
+  onPick(): void;
+  onHover?(): void;
+  current?: boolean;
+}
+
+function RadialButton({ item, x, y, size, onPick, onHover, current }: RadialButtonProps) {
   const border = item.kind === 'command'
     ? 'border-solid border-neutral-300 dark:border-neutral-600'
     : `border-[var(--accent)] ${item.active ? 'border-solid' : 'border-dashed'}`;
@@ -41,7 +51,12 @@ function RadialButton({ item, x, y, size, onPick, onHover, current }: { item: To
   );
 }
 
-export function RadialMenu({ viewport, groups }: { viewport: RefObject<HTMLElement | null>; groups: ToolGroupDef[][] }) {
+interface RadialMenuProps {
+  viewport: RefObject<HTMLElement | null>;
+  groups: ToolGroupDef[][];
+}
+
+export function RadialMenu({ viewport, groups }: RadialMenuProps) {
   const [at, setAt] = useState<{ x: number; y: number } | null>(null);
   const [fan, setFan] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);

@@ -25,7 +25,11 @@ const loadColumns = (): ColumnKey[] => {
 };
 const date = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '');
 
-export function BcfListPanel({ onOpenTopic }: { onOpenTopic(): void }) {
+interface BcfListPanelProps {
+  onOpenTopic(): void;
+}
+
+export function BcfListPanel({ onOpenTopic }: BcfListPanelProps) {
   const viewer = useViewer();
   const { bcf } = viewer;
   const { rows, query, filters, error, pinsVisible, pinColorBy, active, author } = useStore(bcf.store);
@@ -155,7 +159,14 @@ export function BcfListPanel({ onOpenTopic }: { onOpenTopic(): void }) {
   );
 }
 
-function ExportDialog({ open, total, selected, onClose }: { open: boolean; total: number; selected: string[]; onClose(): void }) {
+interface ExportDialogProps {
+  open: boolean;
+  total: number;
+  selected: string[];
+  onClose(): void;
+}
+
+function ExportDialog({ open, total, selected, onClose }: ExportDialogProps) {
   const { bcf } = useViewer();
   const [scope, setScope] = useState<'all' | 'selected'>('all');
   const [version, setVersion] = useState<BcfVersion>('3');
@@ -181,7 +192,14 @@ function ExportDialog({ open, total, selected, onClose }: { open: boolean; total
   );
 }
 
-function DeleteDialog({ open, total, selected, onClose }: { open: boolean; total: number; selected: string[]; onClose(deleted: boolean): void }) {
+interface DeleteDialogProps {
+  open: boolean;
+  total: number;
+  selected: string[];
+  onClose(deleted: boolean): void;
+}
+
+function DeleteDialog({ open, total, selected, onClose }: DeleteDialogProps) {
   const { bcf } = useViewer();
   return (
     <Modal open={open} title={S.bcf.deleteTitle} onCancel={() => onClose(false)} footer={[

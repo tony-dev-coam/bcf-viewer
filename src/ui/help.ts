@@ -56,9 +56,9 @@ export const HELP: { title: string; intro: string; items: [label: string, text: 
     ['Zoom', 'Zoom to all or to the selection.'],
     ['Reset all', 'Visibility, tools and camera back to their defaults.'],
   ] },
-  { title: 'Selection', intro: 'Select elements in 3D.', items: [
-    ['Select', 'Click an element. CTRL adds or removes. ESC clears.'],
-    ['Marquee', 'Drag a box. Left → right selects elements fully inside; right → left also selects elements it touches.'],
+  { title: 'Selection', intro: 'Select and interact with model elements. Single select is the default mode. Press ESC to clear current selection.', items: [
+    ['Select', 'Click an element to select it. Hold CTRL to select multiple elements.'],
+    ['Selection rectangle', 'Click, hold and drag to draw a selection box. Drag left to right - Select elements fully inside the box. Drag right to left - Select elements inside and touching the box.'],
   ] },
   { title: 'Measurement', intro: 'Measure length, area and volume (metric).', items: [
     ['Length', 'Free: click two points. Edge: click an edge.'],

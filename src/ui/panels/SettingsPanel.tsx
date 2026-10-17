@@ -4,7 +4,14 @@ import type { ReactNode } from 'react';
 import { useStore, useViewer } from '../viewer';
 import { S } from '../strings';
 
-function Card({ icon, title, hint, children }: { icon: ReactNode; title: string; hint: string; children: ReactNode }) {
+interface CardProps {
+  icon: ReactNode;
+  title: string;
+  hint: string;
+  children: ReactNode;
+}
+
+function Card({ icon, title, hint, children }: CardProps) {
   return (
     <div className="rounded-xl border border-solid border-neutral-200 p-3 dark:border-neutral-700">
       <div className="flex items-center gap-2 font-semibold">{icon}{title}</div>
@@ -14,7 +21,13 @@ function Card({ icon, title, hint, children }: { icon: ReactNode; title: string;
   );
 }
 
-function Row({ label, checked, onChange }: { label: string; checked: boolean; onChange(v: boolean): void }) {
+interface RowProps {
+  label: string;
+  checked: boolean;
+  onChange(v: boolean): void;
+}
+
+function Row({ label, checked, onChange }: RowProps) {
   return (
     <label className="flex items-center justify-between border-0 border-t border-solid border-neutral-100 py-2 dark:border-neutral-800">
       <span>{label}</span>

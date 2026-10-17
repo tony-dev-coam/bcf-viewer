@@ -25,6 +25,13 @@ test('model trees: relations, types, storeys, search, select, hide (MT-01…07)'
   await tree.getByRole('button', { name: 'Show / hide school_str 03 - Floor' }).click();
   await expect(tree.getByRole('button', { name: 'Show / hide school_str 03 - Floor' }).locator('[aria-label="eye-invisible"]')).toBeVisible();
 
+  // Show selected / Hide selected (toolbar above the tree) act on the still-selected storey.
+  const hiddenEye = tree.getByRole('button', { name: 'Show / hide school_str 03 - Floor' }).locator('[aria-label="eye-invisible"]');
+  await panel.getByRole('button', { name: 'Show selected' }).click();
+  await expect(hiddenEye).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Hide selected' }).click();
+  await expect(hiddenEye).toBeVisible();
+
   // Search filters the tree.
   await panel.getByRole('tab', { name: 'Types' }).click();
   await panel.getByPlaceholder('Search...').fill('IFCBEAM');

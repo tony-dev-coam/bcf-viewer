@@ -15,7 +15,11 @@ import { useConfirmDiscard } from './useConfirmDiscard';
 const T = S.bcf.topic;
 const fmt = (iso?: string) => (iso ? dayjs(iso).format('MM/DD/YYYY hh:mm A') : '');
 
-export function BcfTopicPanel({ onClose }: { onClose(): void }) {
+interface BcfTopicPanelProps {
+  onClose(): void;
+}
+
+export function BcfTopicPanel({ onClose }: BcfTopicPanelProps) {
   const viewer = useViewer();
   const { bcf } = viewer;
   const { active, session, options } = useStore(bcf.store);
@@ -179,7 +183,13 @@ export function BcfTopicPanel({ onClose }: { onClose(): void }) {
   );
 }
 
-function Card({ children, footer, onClose }: { children: React.ReactNode; footer?: React.ReactNode; onClose(): void }) {
+interface CardProps {
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  onClose(): void;
+}
+
+function Card({ children, footer, onClose }: CardProps) {
   return (
     <div className="flex max-h-full w-[360px] flex-col overflow-hidden rounded-2xl bg-white shadow-lg dark:bg-neutral-900" role="dialog" aria-label={S.panels.topic}>
       <header className="flex items-center justify-between border-0 border-b border-solid border-neutral-200 px-4 py-3 dark:border-neutral-800">

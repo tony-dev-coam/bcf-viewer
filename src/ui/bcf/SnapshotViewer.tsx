@@ -4,7 +4,14 @@ import { EditOutlined, UndoOutlined } from '@ant-design/icons';
 import { S } from '../strings';
 
 /** BT-05: enlarged snapshot; in edit mode a pen sketch is drawn on top and saved as a new PNG. */
-export function SnapshotViewer({ src, editable, onClose, onSave }: { src: string | null; editable: boolean; onClose(): void; onSave(png: Uint8Array): void }) {
+interface SnapshotViewerProps {
+  src: string | null;
+  editable: boolean;
+  onClose(): void;
+  onSave(png: Uint8Array): void;
+}
+
+export function SnapshotViewer({ src, editable, onClose, onSave }: SnapshotViewerProps) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const img = useRef<HTMLImageElement>(null);
   const [sketching, setSketching] = useState(false);

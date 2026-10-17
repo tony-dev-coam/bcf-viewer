@@ -22,7 +22,7 @@ export async function createViewer(container: HTMLElement) {
   const tools = createToolManager(engine);
   const camera = createCameraService(engine);
   tools.register('select', createSelectTool(tools, selection, visibility));
-  tools.register('marquee', createMarqueeTool(engine, selection));
+  tools.register('marquee', createMarqueeTool(engine, selection, tools.exit));
   tools.register('view-from-plane', createViewFromPlaneTool(tools, camera));
   const measure = createMeasureService(engine, tools);
   const clip = createClipService(engine, tools, selection);

@@ -12,3 +12,13 @@ body { background: var(--app-bg); font-family: Inter, system-ui, sans-serif; }
 /* Let tree row titles shrink so long names ellipsize instead of pushing the swatch/eye out of view. */
 .ant-tree-node-content-wrapper { min-width: 0; }
 .ant-tree-title { display: block; min-width: 0; }
+
+/* BCF pins: the svg's (0,0) is the anchor, so offset the button by the viewBox origin (16, 40). */
+.bcf-pin { transform: translate(-16px, -40px); filter: drop-shadow(0 1px 2px rgb(0 0 0 / .35)); }
+.bcf-pin-stake { transition: transform .15s ease-out; transform-origin: 0 0; }
+.bcf-pin:hover .bcf-pin-stake, .bcf-pin:focus-visible .bcf-pin-stake { transform: scale(1.12); }
+.bcf-pin:focus-visible { outline: none; }
+.bcf-pin:focus-visible .bcf-pin-stake circle:nth-of-type(2) { stroke: #1b1d21; }
+.bcf-pin-ripple { transform-origin: 0 0; animation: bcf-pin-ripple 1.6s ease-out infinite; }
+@keyframes bcf-pin-ripple { from { transform: scale(1); opacity: .9; } to { transform: scale(3.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bcf-pin-ripple { animation: none; opacity: .5; } .bcf-pin-stake { transition: none; } }

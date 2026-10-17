@@ -20,15 +20,15 @@ test('right-click opens the radial menu; spokes fan out their group; picking run
   await expect(menu).toBeVisible();
   // Four spokes + close, all collapsed; hovering a spoke fans out its group.
   for (const name of ['Select', 'Reset all', 'Length free', 'Set clipping plane', 'Close']) await expect(menu.getByRole('button', { name, exact: true }).first()).toBeVisible();
-  await expect(menu.getByRole('button', { name: 'Marquee selection' })).toHaveCount(0);
+  await expect(menu.getByRole('button', { name: 'Selection rectangle' })).toHaveCount(0);
   await menu.getByRole('button', { name: 'Select', exact: true }).hover();
-  await expect(menu.getByRole('button', { name: 'Marquee selection' })).toBeVisible();
+  await expect(menu.getByRole('button', { name: 'Selection rectangle' })).toBeVisible();
 
   // Hovering the visibility spoke fans out its six actions.
   await menu.getByRole('button', { name: 'Reset all' }).first().hover();
   // Never greyed out (as on the reference), even with nothing selected.
   for (const name of ['Isolate | Show all', 'Hide selected', 'Zoom to selection', 'Zoom to all', 'Show all']) await expect(menu.getByRole('button', { name, exact: true })).toBeEnabled();
-  await expect(menu.getByRole('button', { name: 'Marquee selection' })).toHaveCount(0);
+  await expect(menu.getByRole('button', { name: 'Selection rectangle' })).toHaveCount(0);
 
   // Picking a measurement mode from its fan activates it and closes the menu.
   await menu.getByRole('button', { name: 'Length free' }).first().hover();

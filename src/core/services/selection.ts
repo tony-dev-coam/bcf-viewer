@@ -22,7 +22,9 @@ export function createSelectionService(engine: Engine) {
 
   const store = createStore<{ items: IdMap; count: number }>({ items: {}, count: 0 });
 
-  async function set(items: IdMap) {
+  async function set(all: IdMap) {
+    // guidsToModelIdMap (BCF restore) returns an entry per loaded model; empty ones stall highlightByID.
+    const items = Object.fromEntries(Object.entries(all).filter(([, ids]) => ids.size)) as IdMap;
     if (countItems(items)) await highlighter.highlightByID(SELECT, items, true, false);
     else await highlighter.clear(SELECT);
     await engine.fragments.core.update(true);

@@ -5,8 +5,9 @@ import type { Engine } from '../engine';
 import type { SelectionService } from '../services/selection';
 import type { IdMap } from '../services/selectionRules';
 
-/** SE-02: drag a box. Left→right = elements fully inside; right→left = inside or touching. CTRL adds. */
-export function createMarqueeTool(engine: Engine, selection: SelectionService): Tool {
+/** SE-02: drag a box. Left→right = elements fully inside; right→left = inside or touching. CTRL adds.
+ *  One-shot like the reference: after a box it hands back to `select` via `done`. */
+export function createMarqueeTool(engine: Engine, selection: SelectionService, done: () => void): Tool {
   const controls = engine.world.camera.controls;
   const dom = engine.world.renderer!.three.domElement;
   const box = Object.assign(document.createElement('div'), { className: 'marquee-box' });
@@ -58,6 +59,7 @@ export function createMarqueeTool(engine: Engine, selection: SelectionService): 
       const merged: IdMap = {};
       for (const map of [base, found]) for (const [m, ids] of Object.entries(map)) for (const i of ids) (merged[m] ??= new Set()).add(i);
       await selection.set(merged);
+      done();
     },
     onKey(e) {
       if (e.key !== 'Escape') return false;

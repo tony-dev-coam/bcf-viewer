@@ -5,7 +5,12 @@ import type { ElementInfo, Group } from '../../core';
 import { useStore, useViewer } from '../viewer';
 import { S } from '../strings';
 
-function GroupList({ groups, query }: { groups: Group[]; query: string }) {
+interface GroupListProps {
+  groups: Group[];
+  query: string;
+}
+
+function GroupList({ groups, query }: GroupListProps) {
   const q = query.toLowerCase();
   const shown = useMemo(
     () => groups
@@ -64,7 +69,7 @@ export function ElementInfoPanel() {
     return () => { stale = true; };
   }, [items, count, viewer]);
 
-  if (count > 1) return <Empty description={S.info.multiple} />;
+  if (count > 1) return <Empty description={<>{S.info.multiple}<br />{S.info.empty}</>} />;
   if (count === 0) return <Empty description={S.info.empty} />;
   if (loading || !info) return <Spin className="mt-8 w-full" tip={S.info.loading}><div /></Spin>;
 

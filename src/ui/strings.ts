@@ -160,7 +160,7 @@ export const S = {
       navigation: 'Navigation', projection: 'Camera', color: 'Color', visibility: 'Visibility',
     },
     select: 'Select',
-    marquee: 'Marquee selection',
+    marquee: 'Selection rectangle',
     lengthFree: 'Length free',
     lengthEdge: 'Length edge',
     areaFree: 'Area free',

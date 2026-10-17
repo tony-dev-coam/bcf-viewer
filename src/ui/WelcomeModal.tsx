@@ -9,10 +9,15 @@ const CRAIS = import.meta.env.DEV && import.meta.env.VITE_EXAMPLE === 'crais';
 const CRAIS_BASE = '/local-fixtures/crais/';
 export const EXAMPLE_MODELS = CRAIS
   ? ['example-arc', 'example-mep', 'example-str'].map((n) => `${CRAIS_BASE}${n}.frag`)
-  : ['/examples/school_arq.frag', '/examples/school_str.frag'];
+  : ['arc', 'str', 'ele', 'hvac'].map((n) => `/examples/office_${n}.frag`);
 const EXAMPLE_BCF = CRAIS ? `${CRAIS_BASE}example-bcf.bcfzip` : '/examples/demo.bcfzip';
 
-export function WelcomeModal({ open, onClose }: { open: boolean; onClose(): void }) {
+interface WelcomeModalProps {
+  open: boolean;
+  onClose(): void;
+}
+
+export function WelcomeModal({ open, onClose }: WelcomeModalProps) {
   const { models, bcf } = useViewer();
   const loadExample = async () => {
     onClose();
